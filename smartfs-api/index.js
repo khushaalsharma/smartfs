@@ -1,13 +1,10 @@
 import express from "express";
-import dbClient from "./utils/config.db.js";
+import { databaseConfig } from "./utils/config.db.js";
 
 const app = express();
 
-dbClient.connect()
-        .then(() => {
-            console.log("connection successful!");
-        })
-        .catch((err) => console.error("error in connecting", err));
+await databaseConfig();
+
 
 app.listen(5000,() => {
     console.log("Server started");
