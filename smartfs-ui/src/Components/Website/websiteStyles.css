@@ -1,0 +1,20 @@
+/* auth pages styles */
+
+.authDiv{
+    display: inline-grid;
+    box-shadow: inset;
+    margin-top: 50px;
+}
+
+.authInput{
+    padding: 2px;
+    margin-bottom: 8px;
+    border-radius: 10px;
+    padding-left: 5px;
+    border-width: thin;
+    height: 40px;
+}
+
+.btn-auth{
+    margin-bottom: 8px;
+}
