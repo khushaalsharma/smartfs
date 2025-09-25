@@ -1,29 +1,27 @@
-USE SmartFS
+USE smartfs;
 
-CREATE TABLE userData(
-	userId INT AUTO_INCREMENT NOT NULL,
-	firebaseId NVARCHAR NOT NULL UNIQUE,
-	PRIMARY KEY(userId)
+CREATE TABLE folderData (
+    folder_id INT IDENTITY(1,1) NOT NULL,
+    folder_name NVARCHAR(255) NOT NULL,
+    parent_folder_id INT NULL,
+    user_id INT NOT NULL, 
+    createdAt DATETIME2 DEFAULT GETDATE(),
+    updatedAt DATETIME2 NULL,
+    PRIMARY KEY (folder_id),
+    FOREIGN KEY (parent_folder_id) REFERENCES folderData(folder_id)
 );
 
-CREATE TABLE fileData(
-	fileId INT IDENTITY(1,1) NOT NULL,
-	filename VARCHAR(50) NOT NULL,
-	size BIGINT,
-	path VARCHAR(100) NOT NULL UNIQUE,
-	content NVARCHAR(10000) NOT NULL,
-	userId INT NOT NULL,
-	createdAt timestamp DEFAULT DATE_NOW(),
-	PRIMARY KEY(fileId),
-	FOREIGN KEY(userId) REFERENCES user.userId
-);
-
-CREATE TABLE userDirectories (
-    directoryId INT IDENTITY(1,1) NOT NULL,
-	directoryName VARCHAR(100) NOT NULL,
-    path VARCHAR(500) NOT NULL UNIQUE,
-    userId INT NOT NULL,
-    createdAt DATETIME2 DEFAULT SYSDATETIME(),
-    PRIMARY KEY (directoryId),
-    FOREIGN KEY (userId) REFERENCES dbo.userData(userId)
+CREATE TABLE fileData (
+    file_id INT IDENTITY(1,1) NOT NULL,
+    file_name NVARCHAR(255) NOT NULL,
+	disk_file_name NVARVHAR(255) NOT NULL,
+    extension NVARCHAR(10) NOT NULL,
+    file_loc NVARCHAR(1000) NOT NULL,
+    folder_id INT NOT NULL,
+    file_size BIGINT,
+    author INT NOT NULL, 
+    createdAt DATETIME2 DEFAULT GETDATE(),
+    updatedAt DATETIME2 NULL,
+    PRIMARY KEY (file_id),
+    FOREIGN KEY (folder_id) REFERENCES folderData(folder_id)
 );
