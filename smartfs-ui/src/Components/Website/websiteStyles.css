@@ -1,3 +1,46 @@
+/* Website header */
+
+/* Navbar auth buttons wrapper */
+.auth-navbar-div {
+  margin-left: -1;          /* pushes div to the far right */
+  display: flex;              /* align items horizontally */
+  align-items: center;
+  gap: 10px;                  /* space between buttons */
+}
+
+/* Auth buttons styling */
+.auth-navbar-div .btn {
+  padding: 6px 16px;
+  font-size: 0.95rem;
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+  margin: 0 10px;
+}
+
+/* Sign In button (outlined) */
+.auth-navbar-div .btn-login {
+  background-color: transparent;
+  border: 1px solid #0d6efd;
+  color: #0d6efd;
+}
+.auth-navbar-div .btn-login:hover {
+  background-color: #0d6efd;
+  color: #fff;
+}
+
+/* Sign Up button (solid) */
+.auth-navbar-div .btn-signup {
+  background-color: #0d6efd;
+  border: 1px solid #0d6efd;
+  color: #fff;
+}
+.auth-navbar-div .btn-signup:hover {
+  background-color: #0b5ed7;
+  border-color: #0b5ed7;
+}
+
+
+
 /* auth pages styles */
 
 .authDiv{
@@ -7,7 +50,7 @@
 }
 
 .authInput{
-    padding: 2px;
+    padding: 2px; 
     margin-bottom: 8px;
     border-radius: 10px;
     padding-left: 5px;

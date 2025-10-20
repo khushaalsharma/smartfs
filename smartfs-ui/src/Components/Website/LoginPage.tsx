@@ -16,14 +16,14 @@ const LogInPage = () => {
 
     const [authToken, setAuthToken] = useState("");
 
-    function handleChange(e){
+    function handleChange(e: any){
         e.preventDefault();
 
         const {name, value} = e.target;
         setUserData({...userDate, [name]: value});
     }
 
-    function loginByPassword(e){
+    function loginByPassword(e: any){
         e.preventDefault();
         const auth = getAuth(app);
 
@@ -54,7 +54,7 @@ const LogInPage = () => {
             })
     }
 
-    function loginByGoogle(e){
+    function loginByGoogle(e: any){
         e.preventDefault();
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
@@ -63,9 +63,10 @@ const LogInPage = () => {
                 const credential = GoogleAuthProvider.credentialFromResult(result);
                 const token = credential?.accessToken;
                 const user = result.user;
-
+                
                 const sessionData = {
                     token: result.user.getIdToken(false),
+                    id: user.uid,
                     username: user.displayName,
                     email: user.email,
                     photo: user.photoURL

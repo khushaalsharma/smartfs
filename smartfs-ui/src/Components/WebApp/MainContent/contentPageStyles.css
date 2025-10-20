@@ -1,0 +1,93 @@
+.folder-path {
+    text-align: left;
+}
+
+
+.live-area {
+  width: 100%;
+  padding: 1rem;
+}
+
+/* -------- GRID CONTAINER -------- */
+.live-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+  justify-items: center;
+  align-items: start;
+  width: 100%;
+  max-width: 100%;
+  padding: 1rem;
+}
+
+/* Force maximum of 5 columns, but still responsive */
+@media (min-width: 1300px) {
+  .live-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.live-grid > * {
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  padding: 10px;
+  width: 120px;
+  text-align: center;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.live-grid > *:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* -------- SHARED BOX STYLE FOR FILE & FOLDER -------- */
+.item-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 15px 10px;
+  width: 150px;
+  height: 180px;
+  box-sizing: border-box;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease-in-out;
+  overflow: hidden;
+  padding: 10px;
+}
+
+.item-box:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #d6d6d6;
+}
+
+/* -------- ICON INSIDE BOX -------- */
+.item-box img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  margin-bottom: 10px;
+}
+
+/* -------- NAME LABEL -------- */
+/* .item-name {
+  font-size: 0.9rem;
+  color: #333;
+  word-break: break-word;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 100%;
+  white-space: nowrap;
+} */
+
+.item-box:hover .item-name {
+  color: #007bff;
+}
+

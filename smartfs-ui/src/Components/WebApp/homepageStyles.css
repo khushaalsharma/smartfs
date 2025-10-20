@@ -1,0 +1,9 @@
+.main-content{
+    margin-top: 70px;
+}
+
+.main-content .folder-div{
+    /* position: fixed; */
+    top: 0;
+    left: auto;
+}
