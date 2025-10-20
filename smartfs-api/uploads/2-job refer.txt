@@ -1,0 +1,12 @@
+Subject: [company] Job Referral for [ID]
+
+Hi, 
+I am Khushaal, working as a SWE Intern @Veersa in Java and graduating in 2025 in CSE. I wanted to seek your referral for Job ID: [id] at [company]
+A little about me I have a work experience of over 8 months using Java and Spring. Apart from this I have strong grasp over CS fundamentals and developed various full stack projects over various tech stacks.
+
+Thanks for considering me
+Job ID: [id]
+Link: [job link]
+
+Khushaal Sharma
+Resume: [resume link]

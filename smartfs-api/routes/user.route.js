@@ -19,7 +19,7 @@ router.use(express.json());
 //     saveUninitialized: false
 // }));
 router.use(cors({
-    origin: process.env.CLIENT_URL,
+    origin: process.env.feLink,
     credentials: true
 }));
 

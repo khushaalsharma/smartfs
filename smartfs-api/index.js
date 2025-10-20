@@ -4,6 +4,7 @@ import qdrantConfig from "./utils/config.qdrant.js";
 //routes
 import userRoute from "./routes/user.route.js";
 import fileRoute from "./routes/file.route.js";
+import folderRoute from "./routes/folder.route.js";
 
 //code
 const app = express();
@@ -11,6 +12,9 @@ const app = express();
 //routes dependencies
 app.use("/user", userRoute);
 app.use("/file", fileRoute);
+app.use("/folder", folderRoute);
+
+app.use(express.json());
 
 //database connections
 await databaseConfig();

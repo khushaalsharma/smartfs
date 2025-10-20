@@ -6,7 +6,7 @@ import multer from "multer";
 import { configDotenv } from "dotenv";
 
 import File from "../models/file.model.js";
-import { addFileObject, getFileContent, updateFilePath } from "../managers/file.manager.js";
+import { addFileObject, getFileContent, updateFilePath, getFilesByAuthorAndFolder } from "../managers/file.manager.js";
 import { storeChunks } from "../managers/qdrant.manager.js";
 
 configDotenv();
@@ -14,7 +14,7 @@ const router = express.Router();
 
 router.use(express.json());
 router.use(cors({
-    origin: process.env.CLIENT_URL,
+    origin: process.env.feLink,
     credentials: true
 }));
 router.use(bodyParser.json());
@@ -40,13 +40,31 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     try {
         const { userId, parent } = req.body;
 
+        console.log("file object: ", req.file);
+        console.log("file path: ", req.file.path);
+
+        console.log(
+            {
+                "name": req.file.originalname,
+                "path": req.file.path,
+                "size": req.file.size,
+                "parent": parent,
+                "mimetype": req.file.mimetype,
+                "userId": userId
+            }
+        )
+        let fileName = req.file.originalname.split('.');
+        let extension = '';
+        if(fileName.length > 1){
+            extension = fileName[fileName.length - 1];
+        }
         // 1. Save metadata to DB
         const fileObject = await addFileObject(
             req.file.originalname,
             req.file.path,
             req.file.size,
             parent,
-            req.file.mimetype,
+            extension,
             userId
         );
 
@@ -70,6 +88,17 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     } catch (err) {
         console.error("Upload error:", err);
         return res.status(500).json({ error: err.message });
+    }
+});
+
+router.get("/all/:authorId", async (req, res) => {    
+    try{
+        const {authorId} = req.params;
+        const {folderId} = req.query;
+        const files = await getFilesByAuthorAndFolder(authorId, folderId);
+        res.status(200).json(files);
+    }catch(error){
+        res.status(500).json({error: error.message});
     }
 });
 

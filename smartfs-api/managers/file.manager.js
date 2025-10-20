@@ -47,3 +47,24 @@ export const updateFilePath = async(fileId, path) => {
         throw new Error("couldn't update file path");
     }
 }
+
+export const getFilesByAuthorAndFolder = async(authorId, folderId) => {
+    try{
+        const pool = await sql.connect(config);
+        let query = '';
+        if(folderId !== null && folderId !== ''){
+            query = `SELECT file_id, file_name, extension, file_loc, folder_id, file_size, author 
+                       FROM dbo.fileData 
+                       WHERE author = '${authorId}' AND folder_id = ${folderId}`;
+        }else{
+            query = `SELECT file_id, file_name, extension, file_loc, folder_id, file_size, author 
+                       FROM dbo.fileData 
+                       WHERE author = '${authorId}'`;
+        }
+        const files = await pool.request().query(query);
+        return files.recordset;
+    }catch(error){
+        console.log(error);
+        throw new Error("couldn't fetch files");
+    }
+}
