@@ -1,34 +1,54 @@
 import React, { useState } from 'react';
-
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./contentPageStyles.css";
 import LiveArea from './LiveArea.tsx';
 
 const ContentPage = () => {
+  const [currPath, setCurrPath] = useState("root");
+  const [curr, setCurr] = useState<string>("root");
+  const [pathStack, setPathStack] = useState<string[]>(["root"]);
 
-    const [currPath, setCurrPath] = useState("root");
-    const [folders, setFolders] = useState([]);
-    const [files, setFiles] = useState([]);
+  const handleBack = () => {
+    if (pathStack.length > 1) {
+      const newStack = [...pathStack];
+      newStack.pop(); // remove current folder
+      const newCurr = newStack[newStack.length - 1];
+      setPathStack(newStack);
+      setCurr(newCurr);
+      setCurrPath(newStack.join("/"));
+    }
+  };
 
-    return (
-        <>
-            <div className='row folder-div'>
-                <div className='col-md-10 folder-path'>
-                    {currPath}
-                </div>
-                <div className='col-md-2'>
-                    <button className='btn btn-light' disabled={currPath === "root"}>🔙</button>
-                </div>
-            </div>
-            <div>
-                {/* {(folders.length === 0 && files.length === 0) ? <h5>Your folder is empty</h5> : ""}
-                {/* function to get the folders called here}
-                function to get files goes here */}
+  const handleFolderClick = (folderId: string, folderName: string) => {
+    const newStack = [...pathStack, folderName];
+    setPathStack(newStack);
+    setCurr(folderId);
+    setCurrPath(newStack.join("/"));
+  };
 
-                <LiveArea parent='null' curr='' path={currPath}/>
-            </div>
-        </>
-    )
-}
+  return (
+    <>
+      <div className='row folder-div'>
+        <div className='col-md-10 folder-path'>
+          {currPath}
+        </div>
+        <div className='col-md-2'>
+          <button
+            className='btn btn-light'
+            disabled={curr === "root"}
+            onClick={handleBack}
+          >
+            🔙
+          </button>
+        </div>
+      </div>
 
-export default ContentPage
+      <LiveArea
+        curr={curr}
+        onFolderClick={handleFolderClick}
+      />
+    </>
+  );
+};
+
+export default ContentPage;

@@ -10,16 +10,15 @@ import { fileProps } from './file.interface.ts';
 import { folderProps } from './folder.interface.ts';
 
 interface LiveAreaProps {
-  parent: string;
   curr: string;
-  path: string;
+  onFolderClick: (folderId: string, folderName: string) => void;
 }
 
-type Item = 
+type Item =
   | ({ type: "folder" } & folderProps)
   | ({ type: "file" } & fileProps);
 
-const LiveArea: React.FC<LiveAreaProps> = ({ parent, curr, path }) => {
+const LiveArea: React.FC<LiveAreaProps> = ({ curr, onFolderClick }) => {
   const [folderList, setFolderList] = useState<folderProps[]>([]);
   const [fileList, setFileList] = useState<fileProps[]>([]);
   const [mergedList, setMergedList] = useState<Item[]>([]);
@@ -29,7 +28,6 @@ const LiveArea: React.FC<LiveAreaProps> = ({ parent, curr, path }) => {
   }, [curr]);
 
   useEffect(() => {
-    // Combine both into one array
     const combined: Item[] = [
       ...folderList.map(f => ({ ...f, type: "folder" as const })),
       ...fileList.map(f => ({ ...f, type: "file" as const }))
@@ -38,43 +36,40 @@ const LiveArea: React.FC<LiveAreaProps> = ({ parent, curr, path }) => {
   }, [folderList, fileList]);
 
   const fetchFoldersAndFiles = async () => {
-    let filesFolderMap: Record<string, { folders: folderProps[]; files: fileProps[] }> = {};
-
-    const filesFolderMapStr = localStorage.getItem("filesFolderMap");
-    const sessionData = sessionStorage.getItem("smartFsUser");
-    const userId = sessionData ? JSON.parse(sessionData).id : null;
+    let cache: Record<string, { folders: folderProps[]; files: fileProps[] }> = {};
+    const cacheStr = localStorage.getItem("filesFolderMap");
+    const userId = JSON.parse(sessionStorage.getItem("smartFsUser") || "{}").id;
 
     if (!userId) {
       console.error("No user session found.");
       return;
     }
 
-    // Load existing cache (if any)
-    if (filesFolderMapStr) {
+    // Load cache
+    if (cacheStr) {
       try {
-        filesFolderMap = JSON.parse(filesFolderMapStr);
-      } catch (err) {
-        console.error("Invalid JSON in filesFolderMap:", err);
+        cache = JSON.parse(cacheStr);
+      } catch (e) {
+        console.error("Invalid cache:", e);
       }
     }
 
-    // If cached data for current folder exists, use it
-    if (filesFolderMap[curr]) {
+    // If cached, use it
+    if (curr && cache[curr]) {
       console.log("Using cached data for folder:", curr);
-      const { folders, files } = filesFolderMap[curr];
-      setFolderList(folders);
-      setFileList(files);
+      setFolderList(cache[curr].folders);
+      setFileList(cache[curr].files);
       return;
     }
 
-    // Otherwise, fetch from API and update cache
+    // Otherwise, fetch fresh data
     try {
       const [folderRes, fileRes] = await Promise.all([
         axios.get(`${process.env.REACT_APP_SERVER_URL}/folder/subfolders/${userId}`, {
-          params: { parentId: curr },
+          params: { parentId: curr === "root" ? null : curr },
         }),
         axios.get(`${process.env.REACT_APP_SERVER_URL}/file/all/${userId}`, {
-          params: { folderId: curr },
+          params: { folderId: curr === "root" ? null : curr },
         }),
       ]);
 
@@ -85,8 +80,8 @@ const LiveArea: React.FC<LiveAreaProps> = ({ parent, curr, path }) => {
       setFileList(files);
 
       // Update cache
-      filesFolderMap[curr] = { folders, files };
-      localStorage.setItem("filesFolderMap", JSON.stringify(filesFolderMap));
+      cache[curr] = { folders, files };
+      localStorage.setItem("filesFolderMap", JSON.stringify(cache));
 
       console.log("Cache updated for folder:", curr);
     } catch (error) {
@@ -94,6 +89,10 @@ const LiveArea: React.FC<LiveAreaProps> = ({ parent, curr, path }) => {
     }
   };
 
+  const handleFolderClick = (folderItem: folderProps) => {
+    console.log("Folder clicked:", folderItem.folder_id);
+    onFolderClick(folderItem.folder_id.toString(), folderItem.folder_name);
+  };
 
   return (
     <div className="live-area">
@@ -103,7 +102,13 @@ const LiveArea: React.FC<LiveAreaProps> = ({ parent, curr, path }) => {
         <div className="live-grid">
           {mergedList.map((item) =>
             item.type === "folder" ? (
-              <FolderIcon key={`folder-${item.folder_id}`} {...item} />
+              <div
+                key={`folder-${item.folder_id}`}
+                onClick={() => handleFolderClick(item)}
+                style={{ cursor: 'pointer' }}
+              >
+                <FolderIcon {...item} />
+              </div>
             ) : (
               <FileIcon key={`file-${item.file_id}`} {...item} />
             )
