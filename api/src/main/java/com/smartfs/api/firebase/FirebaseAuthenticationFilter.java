@@ -21,11 +21,12 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
              try{
                  FirebaseToken token = FirebaseAuth.getInstance().verifyIdToken(idToken);
                  FirebaseAuthenticationToken authenticationToken = new FirebaseAuthenticationToken(token);
-
                  SecurityContextHolder.getContext().setAuthentication(authenticationToken);
              }
              catch (Exception e){
                  logger.error("Incorrect/expired token: ", e);
+                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid Firebase token");
+                 return;
              }
          }
 

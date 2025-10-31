@@ -14,14 +14,19 @@ public class FirebaseConfig {
 
     @PostConstruct
     public void init() throws IOException {
-        if(FirebaseApp.getApps().isEmpty()){
-            FileInputStream firebaseAccessKey = new FileInputStream("src/main/resources/firebaseSecKey.json");
+        try {
+            if(FirebaseApp.getApps().isEmpty()){
+                FileInputStream firebaseAccessKey = new FileInputStream("src/main/resources/firebaseSecKey.json");
 
-            FirebaseOptions options = FirebaseOptions.builder()
-                    .setCredentials(GoogleCredentials.fromStream(firebaseAccessKey))
-                    .build();
+                FirebaseOptions options = FirebaseOptions.builder()
+                        .setCredentials(GoogleCredentials.fromStream(firebaseAccessKey))
+                        .build();
 
-            FirebaseApp.initializeApp(options);
+                FirebaseApp.initializeApp(options);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 }
