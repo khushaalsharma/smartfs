@@ -27,4 +27,8 @@ public class FolderManager {
         return foldersList;
     }
 
+    public Folder newFolder(Folder newFolderData){
+        return folderRepository.save(newFolderData);
+    }
+
 }
