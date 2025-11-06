@@ -22,9 +22,18 @@ public class FileController {
     @PostMapping("/new")
     public ResponseEntity uploadNewFile(@RequestBody NewFileDTO fileDto, @RequestParam("file")MultipartFile file){
         try{
-
+            return new ResponseEntity(fileManager.uploadFile(file, fileDto), HttpStatus.CREATED);
         }catch (Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/byFolder/{authorId}/{folderId}")
+    public ResponseEntity getFilesByFolder(@PathVariable("authorId") String authorId, @PathVariable("folderId") int folderId){
+        try{
+            return new ResponseEntity(fileManager.getFilesByAuthorAndFolder(authorId, folderId), HttpStatus.ACCEPTED);
+        }catch (Exception e){
+            return new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
