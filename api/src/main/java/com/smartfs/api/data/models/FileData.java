@@ -9,32 +9,32 @@ import java.sql.Timestamp;
 public class FileData {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "filePkId")
+    @Column(name = "filepkid")
     private int fileId;
 
-    @Column(name = "fileName")
+    @Column(name = "filename")
     private String fileName;
 
-    @Column(name = "fileExtension", nullable = true)
+    @Column(name = "fileextension", nullable = true)
     private String fileExtension;
 
     @Column(name = "mimetype")
     private String mimeType;
 
-    @Column(name = "localPath")
+    @Column(name = "localpath")
     private String path;
 
-    @Column(name = "fileOwner")
+    @Column(name = "fileowner")
     private String fileAuthor;
 
     @OneToOne
-    @JoinColumn(name = "folderPkId", referencedColumnName = "folderPkId")
-    private int folderId;
+    @JoinColumn(name = "folderpkid", nullable = true)
+    private Folder folderId;
 
-    @Column(name = "createdAt")
+    @Column(name = "createdat")
     private Timestamp createdAt;
 
-    @Column(name = "updatedAt", nullable = true)
+    @Column(name = "updatedat", nullable = true)
     private Timestamp updatedAt;
 
     public int getFileId() {
@@ -85,11 +85,11 @@ public class FileData {
         this.fileAuthor = fileAuthor;
     }
 
-    public int getFolderId() {
+    public Folder getFolderId() {
         return folderId;
     }
 
-    public void setFolderId(int folderId) {
+    public void setFolderId(Folder folderId) {
         this.folderId = folderId;
     }
 

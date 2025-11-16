@@ -110,7 +110,7 @@
         <dependency>
             <groupId>io.qdrant</groupId>
             <artifactId>client</artifactId>
-            <version>1.11.0</version>
+            <version>1.15.0</version>
         </dependency>
     </dependencies>
 

@@ -1,79 +1,95 @@
 package com.smartfs.api.managers;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.google.common.util.concurrent.ListenableFuture;
+import io.qdrant.client.QdrantClient;
+import io.qdrant.client.grpc.Collections.*;
+import io.qdrant.client.grpc.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class QdrantManager {
 
-    @Value("${qdrant.base-url}")
-    private String qdrantUrl;
+    private final QdrantClient qdrantClient;
 
-    private final WebClient webClient = WebClient.create();
-
-    public void upsertVector(String collection, String id, float[] vector, String text){
-        Map<String, Object> request = Map.of(
-            "points", List.of(Map.of(
-                    "id", id,
-                        "vector", vector,
-                        "payload", Map.of("text", text)
-                ))
-        );
-
-        webClient.put()
-                .uri(qdrantUrl + "/collections/" + collection + "/points?wait=true")
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
+    public QdrantManager(QdrantClient qdrantClient) {
+        this.qdrantClient = qdrantClient;
     }
 
-    public void upsertVector(String collection, String id, float[] vector, String text, Map<String, Object> extraPayload) {
-        // Merge provided extra payload with the default text field
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("text", text);
-        if (extraPayload != null) {
-            payload.putAll(extraPayload);
+    public void createCollection(String collectionName, int vectorSize){
+        try {
+            VectorParams vectorParams = VectorParams.newBuilder()
+                    .setSize(vectorSize)
+                    .setDistance(Collections.Distance.Cosine)
+                    .build();
+
+            qdrantClient.createCollectionAsync(collectionName, vectorParams);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create the collection: " + e);
         }
-
-        Map<String, Object> request = Map.of(
-                "points", List.of(Map.of(
-                        "id", id,
-                        "vector", vector,
-                        "payload", payload
-                ))
-        );
-
-        webClient.put()
-                .uri(qdrantUrl + "/collections/" + collection + "/points?wait=true")
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
     }
 
+    public boolean checkCollection(String collectionName){
+        try{
+            ListenableFuture<Collections.CollectionInfo> collection = qdrantClient.getCollectionInfoAsync(collectionName);
+            return (collection != null);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-    public List<String> searchSimilar(String collection, float[] queryVector){
-        Map<String, Object> payload = Map.of(
-                "vector", queryVector,
-                "limit", 5
-        );
+    public void upsertVector(String collectionName, List<Float> vector, Map<String, Object> payload){
+        String pointId = UUID.randomUUID().toString();
 
-        Map<String, Object> response = webClient.post()
-                .uri(qdrantUrl + "/collections/" + collection + "/points/search")
-                .bodyValue(payload)
-                .retrieve()
-                .bodyToMono(Map.class)
-                .block();
+        try{
+            Points.PointStruct point = Points.PointStruct.newBuilder()
+                    .setId(id(pointId))
+                    .setVectors(vectors(vector))
+                    .putAllPayload(convertPayload((payload)))
+                    .build();
 
-        List<Map<String, Object>> results = (List<Map<String, Object>>) response.get("result");
-        return results.stream()
-                .map(r -> ((Map<String, Object>) r.get("payload")).get("text").toString())
-                .toList();
+            qdrantClient.upsertAsync(collectionName, List.of(point));
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Points.PointId id(String id){
+        return Points.PointId.newBuilder().setUuid(id).build();
+    }
+
+    private Points.Vectors vectors(List<Float> vector){
+            return Points.Vectors.newBuilder()
+                    .setVector(Points.Vector.newBuilder().addAllData(vector).build())
+                    .build();
+
+    }
+
+    private Map<String, JsonWithInt.Value> convertPayload(Map<String, Object> payload) {
+        return payload.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> convertToValue(e.getValue())
+                ));
+    }
+
+    private JsonWithInt.Value convertToValue(Object obj){
+        if (obj instanceof String) {
+            return JsonWithInt.Value.newBuilder().setStringValue((String) obj).build();
+        } else if (obj instanceof Integer) {
+            return  JsonWithInt.Value.newBuilder().setIntegerValue((Integer) obj).build();
+        } else if (obj instanceof Long) {
+            return  JsonWithInt.Value.newBuilder().setIntegerValue((Long) obj).build();
+        } else if (obj instanceof Double) {
+            return  JsonWithInt.Value.newBuilder().setDoubleValue((Double) obj).build();
+        } else if (obj instanceof Boolean) {
+            return  JsonWithInt.Value.newBuilder().setBoolValue((Boolean) obj).build();
+        }
+        return  JsonWithInt.Value.newBuilder().setStringValue(obj.toString()).build();
     }
 }

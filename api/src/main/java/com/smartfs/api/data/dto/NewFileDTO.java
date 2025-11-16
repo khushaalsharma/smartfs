@@ -1,8 +1,14 @@
 package com.smartfs.api.data.dto;
 
+import com.smartfs.api.data.models.Folder;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor
+@AllArgsConstructor
 public class NewFileDTO {
     private String authorId;
-    private int folderId;
+    private Folder folderId;
 
     public String getAuthorId() {
         return authorId;
@@ -12,11 +18,11 @@ public class NewFileDTO {
         this.authorId = authorId;
     }
 
-    public int getFolderId() {
+    public Folder getFolderId() {
         return folderId;
     }
 
-    public void setFolderId(int folderId) {
+    public void setFolderId(Folder folderId) {
         this.folderId = folderId;
     }
 }

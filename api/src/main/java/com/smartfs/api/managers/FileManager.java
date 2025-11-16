@@ -55,21 +55,21 @@ public class FileManager {
 
         // Process file content chunks and upload embeddings to Qdrant
         for (int i = 0; i < chunks.size(); i++) {
-            float[] embeddings = ollamaManager.getEmbeddings(chunks.get(i));
+            List<Float> embeddings = ollamaManager.getEmbeddings(chunks.get(i));
 
             Map<String, Object> payload = Map.of(
                     "fileId", newFile.getFileId(),
+                    "authorId", newFile.getFileAuthor(),
                     "chunkIndex", i,
                     "type", "content",
                     "fileName", newFile.getFileName(),
-                    "mimeType", newFile.getMimeType()
+                    "mimeType", newFile.getMimeType(),
+                    "text", chunks.get(i)
             );
 
             qdrantManager.upsertVector(
-                    "documents",
-                    "chunk_" + newFile.getFileId() + "_" + i,
+                    "file_chunks",
                     embeddings,
-                    chunks.get(i),
                     payload
             );
         }
@@ -80,10 +80,10 @@ public class FileManager {
                 newFile.getFileName(),
                 newFile.getMimeType(),
                 newFile.getFileAuthor(),
-                newFile.getFolderId() > 0 ? newFile.getFolderId() : "root"
+                newFile.getFolderId() != null ? newFile.getFolderId().getFolderId() : "root"
         );
 
-        float[] metaEmbedding = ollamaManager.getEmbeddings(metadataText);
+        List<Float> metaEmbedding = ollamaManager.getEmbeddings(metadataText);
 
         Map<String, Object> metaPayload = Map.of(
                 "fileId", newFile.getFileId(),
@@ -94,10 +94,8 @@ public class FileManager {
         );
 
         qdrantManager.upsertVector(
-                "documents",
-                "meta_" + newFile.getFileId(),
+                "file_chunks",
                 metaEmbedding,
-                metadataText,
                 metaPayload
         );
     }
@@ -141,7 +139,7 @@ public class FileManager {
         FileData newFile = new FileData();
 
         newFile.setFileAuthor(fileDto.getAuthorId());
-        newFile.setFolderId(fileDto.getFolderId() > 0 ? fileDto.getFolderId() : null);
+        newFile.setFolderId(fileDto.getFolderId());
         newFile.setFileName(file.getOriginalFilename());
         newFile.setMimeType(file.getContentType());
         newFile.setPath(filePath);

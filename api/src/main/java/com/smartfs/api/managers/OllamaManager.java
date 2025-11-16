@@ -15,7 +15,7 @@ public class OllamaManager {
 
     private final WebClient webClient = WebClient.create();
 
-    public float[] getEmbeddings(String text){
+    public List<Float> getEmbeddings(String text){
         String model = "nomic-embed-text";
 
         Map<String, Object> request = Map.of(
@@ -30,13 +30,9 @@ public class OllamaManager {
                 .bodyToMono(Map.class)
                 .block();
 
-        List<Double> vector = (List<Double>) response.get("embedding");
+        //List<Double> vector = (List<Double>) response.get("embedding");
 
-        float arr[] = new float[vector.size()];
-        for(int i=0; i<vector.size(); i++){
-            arr[i] = vector.get(i).floatValue();
-        }
-
+        List<Float> arr = (List<Float>) response.get("embedding");
         return arr;
     }
 }

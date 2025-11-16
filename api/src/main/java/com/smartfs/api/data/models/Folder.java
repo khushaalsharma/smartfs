@@ -1,31 +1,35 @@
 package com.smartfs.api.data.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
 import java.sql.Timestamp;
 
 @Entity
 @Table(name = "FolderData", schema = "dbo")
+@NoArgsConstructor
+@AllArgsConstructor
 public class Folder {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "folderPkId")
+    @Column(name = "folderpkid")
     private int folderId;
 
-    @Column(name = "folderName")
+    @Column(name = "foldername")
     private String folderName;
 
-    @Column(name = "folderOwner")
+    @Column(name = "folderowner")
     private String folderOwner;
 
-    @Column(name = "contentSize")
+    @Column(name = "contentsize")
     private int size;
 
-    @OneToMany
-    @JoinColumn(name = "parentFolderPkId", referencedColumnName = "folderPkId", nullable = true)
-    private int parentId;
+    @ManyToOne
+    @JoinColumn(name = "parentfolderpkid", nullable = true)
+    private Folder parentId;
 
-    @Column(name = "createdAt")
+    @Column(name = "createdat")
     private Timestamp createdAt;
 
     public int getFolderId() {
@@ -60,11 +64,11 @@ public class Folder {
         this.size = size;
     }
 
-    public int getParentId() {
+    public Folder getParentId() {
         return parentId;
     }
 
-    public void setParentId(int parentId) {
+    public void setParentId(Folder parentId) {
         this.parentId = parentId;
     }
 

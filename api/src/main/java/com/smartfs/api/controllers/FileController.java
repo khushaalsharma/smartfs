@@ -1,10 +1,13 @@
 package com.smartfs.api.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartfs.api.data.dto.NewFileDTO;
 import com.smartfs.api.data.models.FileData;
 import com.smartfs.api.managers.FileManager;
+import io.grpc.internal.JsonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,16 +22,19 @@ public class FileController {
     @Autowired
     private FileManager fileManager;
 
-    @PostMapping("/new")
-    public ResponseEntity uploadNewFile(@RequestBody NewFileDTO fileDto, @RequestParam("file")MultipartFile file){
+    @PostMapping(value = "/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity uploadNewFile(@RequestPart("data") String jsonfileDto, @RequestPart("file")MultipartFile file){
         try{
+            ObjectMapper mapper = new ObjectMapper();
+            System.out.println(jsonfileDto);
+            NewFileDTO fileDto = mapper.readValue(jsonfileDto, NewFileDTO.class);
             return new ResponseEntity(fileManager.uploadFile(file, fileDto), HttpStatus.CREATED);
         }catch (Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @GetMapping("/byFolder/{authorId}/{folderId}")
+    @GetMapping(value = "/byFolder/{authorId}/{folderId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getFilesByFolder(@PathVariable("authorId") String authorId, @PathVariable("folderId") int folderId){
         try{
             return new ResponseEntity(fileManager.getFilesByAuthorAndFolder(authorId, folderId), HttpStatus.ACCEPTED);

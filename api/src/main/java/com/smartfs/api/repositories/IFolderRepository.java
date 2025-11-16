@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface IFolderRepository extends JpaRepository<Folder, Integer> {
+public interface  IFolderRepository extends JpaRepository<Folder, Integer> {
 
     @Query("SELECT f FROM Folder f WHERE f.folderOwner = :owner AND f.parentId = null")
     List<Folder> getFoldersByAtRoot(@Param("owner") String ownerId);
