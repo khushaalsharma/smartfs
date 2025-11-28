@@ -3,6 +3,7 @@ package com.smartfs.api.managers;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.grpc.Collections.*;
+import jakarta.annotation.PostConstruct;
 import io.qdrant.client.grpc.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,19 @@ public class QdrantManager {
 
     public QdrantManager(QdrantClient qdrantClient) {
         this.qdrantClient = qdrantClient;
+    }
+
+    @PostConstruct
+    public void ping(){
+        try{
+            if(!pingDB()){
+                throw new RuntimeException("Failed to ping the database");
+            }
+            System.out.println("Database pinged successfully");
+            log.info("Database pinged successfully");
+        }catch(Exception e){
+            throw new RuntimeException("Failed to ping the database: " + e);
+        }
     }
 
     public void createCollection(String collectionName, int vectorSize){
@@ -91,5 +105,14 @@ public class QdrantManager {
             return  JsonWithInt.Value.newBuilder().setBoolValue((Boolean) obj).build();
         }
         return  JsonWithInt.Value.newBuilder().setStringValue(obj.toString()).build();
+    }
+
+    private boolean pingDB(){
+        try{
+            var output = qdrantClient.healthCheckAsync().get();
+            return output != null;
+        }catch(Exception e){
+            return false;
+        }
     }
 }
