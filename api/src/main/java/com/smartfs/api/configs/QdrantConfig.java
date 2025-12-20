@@ -12,13 +12,13 @@ public class QdrantConfig {
     @Value("${qdrant.host}")
     private String qdrantHost;
 
-    @Value("${qdrant.port:6333}")
+    @Value("${qdrant.port}")
     private int qdrantPort;
 
     @Value("${qdrant.api-key}")
     private String qdrantApi;
 
-    @Value("${qdrant.use-tls:true}")
+    @Value("${qdrant.use-tls}")
     private boolean useTls;
 
     @Bean

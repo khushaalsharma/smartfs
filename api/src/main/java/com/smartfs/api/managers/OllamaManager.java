@@ -15,12 +15,11 @@ public class OllamaManager {
 
     private final WebClient webClient = WebClient.create();
 
-    public List<Float> getEmbeddings(String text){
+    public List<Double> getEmbeddings(String text){
         String model = "nomic-embed-text";
-
         Map<String, Object> request = Map.of(
             "model", model,
-                "prompt", text
+            "prompt", text
         );
 
         Map<String, Object> response = webClient.post()
@@ -30,9 +29,11 @@ public class OllamaManager {
                 .bodyToMono(Map.class)
                 .block();
 
-        //List<Double> vector = (List<Double>) response.get("embedding");
+        List<Double> vector = (List<Double>) response.get("embedding");
+        if(vector.size() > 384){
+            return vector.subList(0, 384);
+        }
 
-        List<Float> arr = (List<Float>) response.get("embedding");
-        return arr;
+        return vector;
     }
 }

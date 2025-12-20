@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,19 +21,6 @@ public class QdrantManager {
 
     public QdrantManager(QdrantClient qdrantClient) {
         this.qdrantClient = qdrantClient;
-    }
-
-    @PostConstruct
-    public void ping(){
-        try{
-            if(!pingDB()){
-                throw new RuntimeException("Failed to ping the database");
-            }
-            System.out.println("Database pinged successfully");
-            log.info("Database pinged successfully");
-        }catch(Exception e){
-            throw new RuntimeException("Failed to ping the database: " + e);
-        }
     }
 
     public void createCollection(String collectionName, int vectorSize){
@@ -57,7 +45,7 @@ public class QdrantManager {
         }
     }
 
-    public void upsertVector(String collectionName, List<Float> vector, Map<String, Object> payload){
+    public void upsertVector(String collectionName, List<Double> vector, Map<String, Object> payload){
         String pointId = UUID.randomUUID().toString();
 
         try{
@@ -67,7 +55,10 @@ public class QdrantManager {
                     .putAllPayload(convertPayload((payload)))
                     .build();
 
-            qdrantClient.upsertAsync(collectionName, List.of(point));
+            var output = qdrantClient.upsertAsync(collectionName, List.of(point));
+            if(output.isDone()){
+                System.out.println("Insertion complete at Qdrant");
+            }
         } catch (RuntimeException e) {
             throw new RuntimeException(e);
         }
@@ -77,11 +68,14 @@ public class QdrantManager {
         return Points.PointId.newBuilder().setUuid(id).build();
     }
 
-    private Points.Vectors vectors(List<Float> vector){
-            return Points.Vectors.newBuilder()
-                    .setVector(Points.Vector.newBuilder().addAllData(vector).build())
-                    .build();
-
+    private Points.Vectors vectors(List<Double> vector){
+        return Points.Vectors.newBuilder()
+                .setVector(Points.Vector.newBuilder()
+                        .addAllData(vector.stream()
+                                .map(Double::floatValue)
+                                .collect(Collectors.toList()))
+                        .build())
+                .build();
     }
 
     private Map<String, JsonWithInt.Value> convertPayload(Map<String, Object> payload) {
@@ -107,12 +101,27 @@ public class QdrantManager {
         return  JsonWithInt.Value.newBuilder().setStringValue(obj.toString()).build();
     }
 
+    @PostConstruct
     private boolean pingDB(){
-        try{
+        try {
+            System.out.println("Checking health");
             var output = qdrantClient.healthCheckAsync().get();
+
             return output != null;
-        }catch(Exception e){
-            return false;
+        } catch (ExecutionException e) {
+            System.out.println("failed: " + e);
+            System.out.println("root cause: " + e.getCause());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to ping the database", e.getCause());
+
+        } catch (InterruptedException e) {
+            System.out.println("failed to ping InterruptedException: " + e);
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Failed to ping the database", e);
+
+        } catch (Exception e) {
+            System.out.println("failed to ping RuntimeException: " + e);
+            throw new RuntimeException("Failed to ping the database", e);
         }
     }
 }

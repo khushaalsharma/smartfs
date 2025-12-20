@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "FolderData", schema = "dbo")
+@Table(name = "folder_data", schema = "dbo")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Folder {

@@ -3,6 +3,7 @@ package com.smartfs.api.managers;
 import com.smartfs.api.data.dto.NewFileDTO;
 import com.smartfs.api.data.models.FileData;
 import com.smartfs.api.repositories.IFileRepository;
+import jakarta.annotation.PostConstruct;
 import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +34,12 @@ public class FileManager {
     private QdrantManager qdrantManager;
 
     public FileData saveFileMetaData(FileData newFileData){
-        return fileRepository.save(newFileData);
+        try {
+            return fileRepository.save(newFileData);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
     }
 
     public List<FileData> getFilesByAuthorAndFolder(String ownerId, int folderId){
@@ -43,7 +51,7 @@ public class FileManager {
         }
     }
 
-    private void processFile(MultipartFile file, FileData newFile) throws Exception {
+    private void processFile( MultipartFile file, FileData newFile) throws Exception {
         // Extract text content from file using Apache Tika
         String content;
         try (InputStream stream = file.getInputStream()) {
@@ -55,7 +63,7 @@ public class FileManager {
 
         // Process file content chunks and upload embeddings to Qdrant
         for (int i = 0; i < chunks.size(); i++) {
-            List<Float> embeddings = ollamaManager.getEmbeddings(chunks.get(i));
+            List<Double> embeddings = ollamaManager.getEmbeddings(chunks.get(i));
 
             Map<String, Object> payload = Map.of(
                     "fileId", newFile.getFileId(),
@@ -68,7 +76,7 @@ public class FileManager {
             );
 
             qdrantManager.upsertVector(
-                    "file_chunks",
+                    "file_chunk",
                     embeddings,
                     payload
             );
@@ -83,7 +91,7 @@ public class FileManager {
                 newFile.getFolderId() != null ? newFile.getFolderId().getFolderId() : "root"
         );
 
-        List<Float> metaEmbedding = ollamaManager.getEmbeddings(metadataText);
+        List<Double> metaEmbedding = ollamaManager.getEmbeddings(metadataText);
 
         Map<String, Object> metaPayload = Map.of(
                 "fileId", newFile.getFileId(),
@@ -94,7 +102,7 @@ public class FileManager {
         );
 
         qdrantManager.upsertVector(
-                "file_chunks",
+                "file_chunk",
                 metaEmbedding,
                 metaPayload
         );
@@ -143,6 +151,8 @@ public class FileManager {
         newFile.setFileName(file.getOriginalFilename());
         newFile.setMimeType(file.getContentType());
         newFile.setPath(filePath);
+        newFile.setFileSize(file.getSize());
+        newFile.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
 
         newFile = saveFileMetaData(newFile);
 

@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "FileData", schema = "dbo")
+@Table(name = "file_data", schema = "dbo")
 public class FileData {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -14,6 +14,9 @@ public class FileData {
 
     @Column(name = "filename")
     private String fileName;
+
+    @Column(name = "filesize", nullable = false)
+    private Long fileSize;
 
     @Column(name = "fileextension", nullable = true)
     private String fileExtension;
@@ -107,5 +110,13 @@ public class FileData {
 
     public void setUpdatedAt(Timestamp updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Long getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(Long fileSize) {
+        this.fileSize = fileSize;
     }
 }
