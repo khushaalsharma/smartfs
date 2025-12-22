@@ -7,11 +7,14 @@ import jakarta.annotation.PostConstruct;
 import io.qdrant.client.grpc.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import io.qdrant.client.grpc.Points;
 
 @Service
 @Slf4j
@@ -122,6 +125,90 @@ public class QdrantManager {
         } catch (Exception e) {
             System.out.println("failed to ping RuntimeException: " + e);
             throw new RuntimeException("Failed to ping the database", e);
+        }
+    }
+
+    public List<Points.ScoredPoint> findData(String collectionName, List<Double> vector, String userId) throws ExecutionException, InterruptedException {
+        List<Float> vectorFloat = vector.stream()
+                .map(Double::floatValue)
+                .collect(Collectors.toList());
+
+        List<Points.ScoredPoint> pointsList = qdrantClient.searchAsync(
+                Points.SearchPoints.newBuilder()
+                        .setCollectionName(collectionName)
+                        .addAllVector(vectorFloat)
+                        .setFilter(
+                                Points.Filter.newBuilder()
+                                        .addMust(
+                                                Points.Condition.newBuilder()
+                                                        .setField(
+                                                                Points.FieldCondition.newBuilder()
+                                                                        .setKey("authorId")
+                                                                        .setMatch(Points.Match.newBuilder()
+                                                                                .setKeyword(userId)
+                                                                                .build())
+                                                                        .build()
+                                                        )
+                                                        .build()
+                                        )
+                                        .build()
+                        )
+                        .setLimit(5)
+                        .setWithPayload(Points.WithPayloadSelector.newBuilder()
+                            .setEnable(true)
+                            .build())
+                        .build()
+        ).get();
+
+        return pointsList;
+    }
+
+    public Map<String, Object> convertPayloadToMap(Map<String, JsonWithInt.Value> payload) {
+        Map<String, Object> result = new HashMap<>();
+        payload.forEach((key, value) -> {
+            result.put(key, convertFromValue(value));
+        });
+        return result;
+    }
+
+    private Object convertFromValue(JsonWithInt.Value value) {
+        if (value == null) {
+            return null;
+        }
+
+        switch (value.getKindCase()) {
+            case STRING_VALUE:
+                return value.getStringValue();
+
+            case INTEGER_VALUE:
+                return value.getIntegerValue();
+
+            case DOUBLE_VALUE:
+                return value.getDoubleValue();
+
+            case BOOL_VALUE:
+                return value.getBoolValue();
+
+            case LIST_VALUE:
+                // If you need to handle lists
+                return value.getListValue().getValuesList().stream()
+                        .map(this::convertFromValue)
+                        .collect(Collectors.toList());
+
+            case STRUCT_VALUE:
+                // If you need to handle nested objects
+                Map<String, Object> map = new HashMap<>();
+                value.getStructValue().getFieldsMap().forEach((key, val) ->
+                        map.put(key, convertFromValue(val))
+                );
+                return map;
+
+            case NULL_VALUE:
+                return null;
+
+            case KIND_NOT_SET:
+            default:
+                return null;
         }
     }
 }

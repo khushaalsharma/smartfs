@@ -1,8 +1,11 @@
 package com.smartfs.api.managers;
 
 import com.smartfs.api.data.dto.NewFileDTO;
+import com.smartfs.api.data.dto.SearchDTO;
 import com.smartfs.api.data.models.FileData;
 import com.smartfs.api.repositories.IFileRepository;
+import io.qdrant.client.grpc.JsonWithInt;
+import io.qdrant.client.grpc.Points;
 import jakarta.annotation.PostConstruct;
 import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +23,13 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 @Service
 public class FileManager {
+
+    private final String collectionName = "file_chunk";
 
     @Autowired
     private IFileRepository fileRepository;
@@ -159,5 +166,21 @@ public class FileManager {
         processFile(file, newFile);
 
         return newFile;
+    }
+
+    public List<FileData> searchFile(SearchDTO queryString) throws ExecutionException, InterruptedException {
+        //convert the query string to its vector strings
+        List<Double> vecEmbedds = ollamaManager.getEmbeddings(queryString.getQueryString());
+
+        List<Points.ScoredPoint> response = qdrantManager.findData("file_chunk", vecEmbedds, queryString.getAuthorId());
+
+        List<Object> fileIdsFromQdrant = response.stream()
+                .map(x -> {
+                    Map<String, Object> map = qdrantManager.convertPayloadToMap(x.getPayloadMap());
+                    return map.get("fileId");
+                })
+                .toList();
+
+        return fileRepository.findAllById(fileIdsFromQdrant);
     }
 }

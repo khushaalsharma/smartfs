@@ -2,6 +2,7 @@ package com.smartfs.api.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartfs.api.data.dto.NewFileDTO;
+import com.smartfs.api.data.dto.SearchDTO;
 import com.smartfs.api.data.models.FileData;
 import com.smartfs.api.managers.FileManager;
 import io.grpc.internal.JsonUtil;
@@ -11,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import java.util.List;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,7 +30,7 @@ public class FileController {
             ObjectMapper mapper = new ObjectMapper();
             System.out.println(jsonfileDto);
             NewFileDTO fileDto = mapper.readValue(jsonfileDto, NewFileDTO.class);
-            return new ResponseEntity(fileManager.uploadFile(file, fileDto), HttpStatus.CREATED);
+            return new ResponseEntity<>(fileManager.uploadFile(file, fileDto), HttpStatus.CREATED);
         }catch (Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -37,9 +39,19 @@ public class FileController {
     @GetMapping(value = "/byFolder/{authorId}/{folderId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getFilesByFolder(@PathVariable("authorId") String authorId, @PathVariable("folderId") int folderId){
         try{
-            return new ResponseEntity(fileManager.getFilesByAuthorAndFolder(authorId, folderId), HttpStatus.ACCEPTED);
+            return new ResponseEntity<>(fileManager.getFilesByAuthorAndFolder(authorId, folderId), HttpStatus.ACCEPTED);
         }catch (Exception e){
-            return new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping(value = "/search")
+    public ResponseEntity findFiles(@RequestBody SearchDTO searchDTO){
+        try{
+            List<FileData> files = fileManager.searchFile(searchDTO);
+            return new ResponseEntity<>(files, HttpStatus.ACCEPTED);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }
