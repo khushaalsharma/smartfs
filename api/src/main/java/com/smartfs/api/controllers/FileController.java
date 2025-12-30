@@ -5,7 +5,6 @@ import com.smartfs.api.data.dto.NewFileDTO;
 import com.smartfs.api.data.dto.SearchDTO;
 import com.smartfs.api.data.models.FileData;
 import com.smartfs.api.managers.FileManager;
-import io.grpc.internal.JsonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -14,8 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
-import java.io.File;
-import java.io.FileInputStream;
 
 @RestController
 @RequestMapping("/file")
@@ -49,6 +46,9 @@ public class FileController {
     public ResponseEntity findFiles(@RequestBody SearchDTO searchDTO){
         try{
             List<FileData> files = fileManager.searchFile(searchDTO);
+            if(files.isEmpty()){
+                return new ResponseEntity<>("no file found", HttpStatus.OK);
+            }
             return new ResponseEntity<>(files, HttpStatus.ACCEPTED);
         } catch (Exception e) {
             throw new RuntimeException(e);

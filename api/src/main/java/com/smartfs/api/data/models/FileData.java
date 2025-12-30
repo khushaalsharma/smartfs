@@ -40,6 +40,9 @@ public class FileData {
     @Column(name = "updatedat", nullable = true)
     private Timestamp updatedAt;
 
+    @Column(name = "chunks", nullable = true)
+    private Integer chunks;
+
     public int getFileId() {
         return fileId;
     }
@@ -118,5 +121,13 @@ public class FileData {
 
     public void setFileSize(Long fileSize) {
         this.fileSize = fileSize;
+    }
+
+    public Integer getChunks() {
+        return chunks;
+    }
+
+    public void setChunks(Integer chunks) {
+        this.chunks = chunks;
     }
 }

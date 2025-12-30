@@ -4,9 +4,7 @@ import com.smartfs.api.data.dto.NewFileDTO;
 import com.smartfs.api.data.dto.SearchDTO;
 import com.smartfs.api.data.models.FileData;
 import com.smartfs.api.repositories.IFileRepository;
-import io.qdrant.client.grpc.JsonWithInt;
 import io.qdrant.client.grpc.Points;
-import jakarta.annotation.PostConstruct;
 import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,11 +18,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @Service
 public class FileManager {
@@ -58,7 +54,7 @@ public class FileManager {
         }
     }
 
-    private void processFile( MultipartFile file, FileData newFile) throws Exception {
+    private Integer processFile( MultipartFile file, FileData newFile) throws Exception {
         // Extract text content from file using Apache Tika
         String content;
         try (InputStream stream = file.getInputStream()) {
@@ -113,6 +109,8 @@ public class FileManager {
                 metaEmbedding,
                 metaPayload
         );
+
+        return chunks.size();
     }
 
 
@@ -163,9 +161,64 @@ public class FileManager {
 
         newFile = saveFileMetaData(newFile);
 
-        processFile(file, newFile);
+        Integer chunks = processFile(file, newFile);
+
+        // adding the number of vector chunks made for this file to the SQL DB
+        newFile.setChunks(chunks);
+        newFile = fileRepository.save(newFile);
 
         return newFile;
+    }
+
+    private List<Integer> finalFileId(List<Points.ScoredPoint> chunksFromQdrant){
+        List<Integer> fileIds = new ArrayList<>();
+        Map<Long, chunkClass> allIds = new HashMap<>();
+
+        //building the map to be processed for filtering/sorting
+        chunksFromQdrant.stream()
+                .forEach(x -> {
+                    Map<String, Object> payloadMap = qdrantManager.convertPayloadToMap(x.getPayloadMap());
+                    Long fileId = (Long) payloadMap.get("fileId");
+
+                    if(allIds.containsKey(fileId)){
+                        chunkClass obj = allIds.get(fileId);
+                        Float newScore = (float) (((obj.getScore()*obj.getCount()) + x.getScore())/(obj.getCount() + 1));
+                        Integer count = obj.getCount() + 1;
+                        allIds.put(fileId, new chunkClass(newScore, count));
+                    }else{
+                        allIds.put(fileId, new chunkClass(x.getScore(), 1));
+                    }
+                });
+
+        //process the map by score and count
+        List<Map.Entry<Long, chunkClass>> sortedEntries = allIds.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(
+                        Comparator.comparing(chunkClass::getScore).reversed()  // Score first, descending
+                                .thenComparing(chunkClass::getCount, Comparator.reverseOrder())  // Then count, descending
+                ))
+                .collect(Collectors.toList());
+
+        // NEW APPROACH: Filter by similarity score threshold
+        fileIds = sortedEntries.stream()
+                .filter(x -> {
+                    Float avgScore = x.getValue().getScore();
+                    Integer matchedChunks = x.getValue().getCount();
+
+                    Optional<FileData> file = fileRepository.findById(x.getKey().intValue());
+                    if(file.isEmpty()) return false;
+
+                    Integer totalChunks = file.get().getChunks();
+                    float coverage = (float) matchedChunks / totalChunks;
+
+                    // Require high score AND reasonable coverage
+                    return avgScore >= 0.5f && (coverage >= 0.15f || matchedChunks >= totalChunks/2);
+                    // Means: 15% of chunks OR at least 3 chunks, whichever is MORE
+                })
+                .limit(5)  // Only return top 5 files
+                .map(x -> x.getKey().intValue())
+                .collect(Collectors.toList());
+
+        return fileIds;
     }
 
     public List<FileData> searchFile(SearchDTO queryString) throws ExecutionException, InterruptedException {
@@ -174,13 +227,34 @@ public class FileManager {
 
         List<Points.ScoredPoint> response = qdrantManager.findData("file_chunk", vecEmbedds, queryString.getAuthorId());
 
-        List<Object> fileIdsFromQdrant = response.stream()
-                .map(x -> {
-                    Map<String, Object> map = qdrantManager.convertPayloadToMap(x.getPayloadMap());
-                    return map.get("fileId");
-                })
-                .toList();
+        List<Integer> fileIdsFromQdrant = finalFileId(response);
 
         return fileRepository.findAllById(fileIdsFromQdrant);
+    }
+}
+
+class chunkClass{
+    private Float score;
+    private Integer count;
+
+    public chunkClass(Float score, Integer i) {
+        this.count = i;
+        this.score = score;
+    }
+
+    public Float getScore() {
+        return score;
+    }
+
+    public void setScore(Float score) {
+        this.score = score;
+    }
+
+    public Integer getCount() {
+        return count;
+    }
+
+    public void setCount(Integer count) {
+        this.count = count;
     }
 }
