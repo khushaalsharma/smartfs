@@ -31,4 +31,8 @@ public class FolderManager {
         return folderRepository.save(newFolderData);
     }
 
+    public List<Folder> getAllFoldersByOwner(String authorId){
+        return folderRepository.getFoldersByOwner(authorId);
+    }
+
 }

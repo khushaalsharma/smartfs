@@ -14,6 +14,6 @@ public interface IFileRepository extends JpaRepository<FileData, Integer> {
     @Query("SELECT f FROM FileData f WHERE f.fileAuthor = :author AND f.folderId = :folderId")
     List<FileData> getFileByAuthorAndFolder(@Param("author") String author, @Param("folderId") int folderId);
 
-    @Query("SELECT f FROM FileData f WHERE f.fileAuthor = :owner AND f.folderId = null")
+    @Query("SELECT f FROM FileData f WHERE f.fileAuthor = :owner AND f.folderId IS NULL")
     List<FileData> getFilesAtRoot(@Param("owner") String owner);
 }

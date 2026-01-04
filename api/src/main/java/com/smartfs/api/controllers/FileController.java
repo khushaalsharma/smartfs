@@ -15,7 +15,7 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("/file")
+@RequestMapping("file")
 public class FileController {
 
     @Autowired
@@ -27,6 +27,7 @@ public class FileController {
             ObjectMapper mapper = new ObjectMapper();
             System.out.println(jsonfileDto);
             NewFileDTO fileDto = mapper.readValue(jsonfileDto, NewFileDTO.class);
+            System.out.println("file is null? :" + file == null);
             return new ResponseEntity<>(fileManager.uploadFile(file, fileDto), HttpStatus.CREATED);
         }catch (Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);

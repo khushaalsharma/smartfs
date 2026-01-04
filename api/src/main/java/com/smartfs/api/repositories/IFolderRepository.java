@@ -11,9 +11,12 @@ import java.util.List;
 @Repository
 public interface  IFolderRepository extends JpaRepository<Folder, Integer> {
 
-    @Query("SELECT f FROM Folder f WHERE f.folderOwner = :owner AND f.parentId = null")
+    @Query("SELECT f FROM Folder f WHERE f.folderOwner = :owner AND f.parentId IS NULL")
     List<Folder> getFoldersByAtRoot(@Param("owner") String ownerId);
 
     @Query("SELECT f FROM Folder f WHERE f.folderOwner = :owner AND f.parentId = parentId")
     List<Folder> getFolderByParent(@Param("owner") String ownerId, @Param("parentId") int parentFolderId);
+
+    @Query("SELECT f FROM Folder f WHERE f.folderOwner = :author")
+    List<Folder> getFoldersByOwner(@Param("author") String ownerId);
 }

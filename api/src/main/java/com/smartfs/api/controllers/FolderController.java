@@ -2,6 +2,7 @@ package com.smartfs.api.controllers;
 
 import com.smartfs.api.data.models.Folder;
 import com.smartfs.api.managers.FolderManager;
+import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,4 +45,17 @@ public class FolderController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @GetMapping("/all/{authorId}")
+    public ResponseEntity getAllFoldersUnderUser(@PathVariable("authorId") String author){
+        try{
+            List<Folder> foldersList = folderManager.getAllFoldersByOwner(author);
+
+            return new ResponseEntity<>(foldersList, HttpStatus.OK);
+
+        }catch (Exception e){
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }
