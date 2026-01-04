@@ -1,7 +1,9 @@
 export interface folderProps{
-    folder_id: number;
-    folder_name: string;
-    parent_id: string | null;
+    folderId: number;
+    folderName: string;
+    parentId: string | null;
+    folderOwner: string;
+    size: number | 0;
     createdAt: string;
     updatedAt: string;
 }

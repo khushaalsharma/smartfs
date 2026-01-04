@@ -14,10 +14,12 @@ const NewFolderDialog = ({changeFolderDialogState}: FolderDivProps) => {
     const [parentFolderId, setParentFolderId] = useState<number | null>(null);
     const [folders, setFolders] = useState<Map<number, string>>(new Map());
     const [userId, setUserId] = useState<string | null>(null);
+    const [token, setToken] = useState<string | null>(null);
 
     const getAllFolders = async() => {
         const sessionData = sessionStorage.getItem("smartFsUser");
         const userId = sessionData ? JSON.parse(sessionData).id : null;
+        const token = sessionData ? JSON.parse(sessionData).token : null;
 
         setUserId(userId);
 
@@ -27,12 +29,16 @@ const NewFolderDialog = ({changeFolderDialogState}: FolderDivProps) => {
         }
 
         try{
-           const response = await axios.get(`${process.env.REACT_APP_SERVER_URL}/folder/all/${userId}`);
+           const response = await axios.get(`${process.env.REACT_APP_SERVER_URL}/folder/all/${userId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+           });
             const folderData = response.data;
             let folderMap : Map<number, string> = new Map();
             if(folderData && Array.isArray(folderData)){
                 folderData.forEach((folderItem: any) => {
-                    folderMap.set(folderItem.folder_id, folderItem.folder_name);
+                    folderMap.set(folderItem.folderId, folderItem.folderName);
                 });
             }
 
@@ -52,21 +58,28 @@ const NewFolderDialog = ({changeFolderDialogState}: FolderDivProps) => {
         if(!userId){
             const sessionData = sessionStorage.getItem("smartFsUser");
             const userId = sessionData ? JSON.parse(sessionData).id : null;
+            const jwtToken = sessionData ? JSON.parse(sessionData).token : null;
             if(!userId){
                 console.error("User ID not found");
                 return;
             }
             else{
                 setUserId(userId);
+                setToken(jwtToken);
             }
         }
 
         try{
-            await axios.post(`${process.env.REACT_APP_SERVER_URL}/folder/create`, 
+            await axios.post(`${process.env.REACT_APP_SERVER_URL}/folder/new`, 
                 {
                     folderName: folderName,
-                    author: userId,
+                    folderOwner: userId,
                     parentId: parentFolderId !== 0 ? parentFolderId : null
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
                 }
             ).then((response) => {
                 console.log("Folder created successfully: ", response.data);

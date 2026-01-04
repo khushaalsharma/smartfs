@@ -4,11 +4,11 @@ import "./contentPageStyles.css";
 
 import { fileProps } from './file.interface';
 
-const FileIcon: React.FC<fileProps> = ({ file_name, file_id, file_loc, size, folder_id, createdAt, updatedAt }) => {
+const FileIcon: React.FC<fileProps> = ({ fileName, fileId, path, fileSize, folderId, createdAt, updatedAt }) => {
     return (
         <div className='item-box'>
             <i className="fa-solid fa-file fa-6x"></i>
-            <strong className='item-name'>{file_name}</strong>
+            <strong className='item-name'>{fileName}</strong>
         </div>
     )
 }

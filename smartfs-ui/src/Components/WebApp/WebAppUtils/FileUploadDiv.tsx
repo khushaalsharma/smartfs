@@ -17,6 +17,7 @@ const FileUploadDiv = ({ openFileDialog }: FileUploadDivProps) => {
     const getFoldersForDropDown = async () => {
         const sessionData = sessionStorage.getItem("smartFsUser");
         const userId = sessionData ? JSON.parse(sessionData).id : null;
+        const token = sessionData ? JSON.parse(sessionData).token : null;
 
         try{
             if(!userId) {
@@ -24,11 +25,15 @@ const FileUploadDiv = ({ openFileDialog }: FileUploadDivProps) => {
                 return;
             }
 
-            const response = await axios.get(`${process.env.REACT_APP_SERVER_URL}/folder/all/${userId}`);
+            const response = await axios.get(`${process.env.REACT_APP_SERVER_URL}/folder/all/${userId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
             const folderData = response.data;
             let folderMap : Map<number, string> = new Map();
             if(folderData && Array.isArray(folderData)){
-                folderMap = new Map(folderData.map((folder: any) => [folder.folder_id, folder.folder_name]));
+                folderMap = new Map(folderData.map((folder: any) => [folder.folderId, folder.folderName]));
             }
 
             folderMap.set(0, "No folder");
@@ -52,7 +57,7 @@ const FileUploadDiv = ({ openFileDialog }: FileUploadDivProps) => {
         if(event.target.files && event.target.files.length > 0){
             console.log(event.target.files);
             setFile(event.target.files[0]);
-            console.log("file selected: " + file);
+            console.log("file selected:", event.target.files[0].name);
         }
     } 
 
@@ -65,24 +70,27 @@ const FileUploadDiv = ({ openFileDialog }: FileUploadDivProps) => {
         const user = JSON.parse(sessionStorage.getItem("smartFsUser") || "{}");
         const formData = new FormData();
 
-        // Append the file and metadata
+        // Append the file
         formData.append("file", file);
-        formData.append("userId", user.id);
-        if(folder_id !== null){
-            formData.append("parent", folder_id.toString());
-        }else{
-            formData.append("parent", "null"); // Default to root if no folder selected
-        }
+
+        // Append the metadata as a JSON string
+        const payloadData = {
+            folderId: folder_id !== null ? folder_id.toString() : null,
+            authorId: user.id // Fixed typo: "authordId" -> "authorId"
+        };
+
+        formData.append("data", JSON.stringify(payloadData));
 
         try {
             const response = await axios.post(
-            `${process.env.REACT_APP_SERVER_URL}/file/upload`,
-            formData,
-            {
-                headers: {
-                "Content-Type": "multipart/form-data",
-                },
-            }
+                `${process.env.REACT_APP_SERVER_URL}/file/new`,
+                formData,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                        Authorization: `Bearer ${user.token}`
+                    },
+                }
             );
 
             window.alert("File uploaded successfully.");
@@ -92,7 +100,6 @@ const FileUploadDiv = ({ openFileDialog }: FileUploadDivProps) => {
             window.alert("Error uploading file.");
         }
     };
-
 
     return (
         <div className="file-upload-div">

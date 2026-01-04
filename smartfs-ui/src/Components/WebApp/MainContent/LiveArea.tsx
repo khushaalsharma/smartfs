@@ -39,6 +39,7 @@ const LiveArea: React.FC<LiveAreaProps> = ({ curr, onFolderClick }) => {
     let cache: Record<string, { folders: folderProps[]; files: fileProps[] }> = {};
     const cacheStr = localStorage.getItem("filesFolderMap");
     const userId = JSON.parse(sessionStorage.getItem("smartFsUser") || "{}").id;
+    const token = JSON.parse(sessionStorage.getItem("smartFsUser") || "{}").token
 
     if (!userId) {
       console.error("No user session found.");
@@ -65,11 +66,15 @@ const LiveArea: React.FC<LiveAreaProps> = ({ curr, onFolderClick }) => {
     // Otherwise, fetch fresh data
     try {
       const [folderRes, fileRes] = await Promise.all([
-        axios.get(`${process.env.REACT_APP_SERVER_URL}/folder/subfolders/${userId}`, {
-          params: { parentId: curr === "root" ? null : curr },
+        axios.get(`${process.env.REACT_APP_SERVER_URL}/folder/subFolders/${userId}` + (curr === "root" ? '/0' : `/${curr}`), {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }),
-        axios.get(`${process.env.REACT_APP_SERVER_URL}/file/all/${userId}`, {
-          params: { folderId: curr === "root" ? null : curr },
+        axios.get(`${process.env.REACT_APP_SERVER_URL}/file/byFolder/${userId}` + (curr === "root" ? '/0' : `/${curr}`), {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }),
       ]);
 
@@ -90,8 +95,8 @@ const LiveArea: React.FC<LiveAreaProps> = ({ curr, onFolderClick }) => {
   };
 
   const handleFolderClick = (folderItem: folderProps) => {
-    console.log("Folder clicked:", folderItem.folder_id);
-    onFolderClick(folderItem.folder_id.toString(), folderItem.folder_name);
+    console.log("Folder clicked:", folderItem.folderId);
+    onFolderClick(folderItem.folderId.toString(), folderItem.folderName);
   };
 
   return (
@@ -103,14 +108,14 @@ const LiveArea: React.FC<LiveAreaProps> = ({ curr, onFolderClick }) => {
           {mergedList.map((item) =>
             item.type === "folder" ? (
               <div
-                key={`folder-${item.folder_id}`}
+                key={`folder-${item.folderId}`}
                 onClick={() => handleFolderClick(item)}
                 style={{ cursor: 'pointer' }}
               >
                 <FolderIcon {...item} />
               </div>
             ) : (
-              <FileIcon key={`file-${item.file_id}`} {...item} />
+              <FileIcon key={`file-${item.fileId}`} {...item} />
             )
           )}
         </div>

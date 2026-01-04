@@ -37,7 +37,8 @@ const LogInPage = () => {
                             token: token,
                             email: user.email,
                             username: user.displayName,
-                            photo: user.photoURL
+                            photo: user.photoURL,
+                            id: user.uid
                         }
 
                         sessionStorage.setItem("smartFsUser", JSON.stringify(userData));
