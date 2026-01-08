@@ -43,7 +43,7 @@ public class FileController {
         }
     }
 
-    @GetMapping(value = "/search")
+    @PostMapping(value = "/search")
     public ResponseEntity findFiles(@RequestBody SearchDTO searchDTO){
         try{
             List<FileData> files = fileManager.searchFile(searchDTO);
