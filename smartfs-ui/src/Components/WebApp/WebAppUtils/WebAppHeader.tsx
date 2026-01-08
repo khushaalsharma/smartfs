@@ -11,6 +11,9 @@ const WebAppHeader = () => {
     const [searchedFiles, setSearchedFiles] = useState<fileProps[]>([]);
 
     const toggleSearchWindow = () => {
+        if(searchWindowVisible){
+            setSearchedFiles([]);
+        }
         setSearchWindowVisible(!searchWindowVisible);
     }
 
