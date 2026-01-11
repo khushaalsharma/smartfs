@@ -3,6 +3,7 @@ import "bootstrap/dist/css/bootstrap.css";
 import "./webAppUtilsStyles.css";
 import { fileProps } from '../MainContent/file.interface.ts';
 import axios from 'axios';
+import { getValidToken, getUserData } from '../../../Utils/tokenUtils.ts';
 import FileIcon from '../MainContent/FileIcon.tsx';
 
 const WebAppHeader = () => {
@@ -18,10 +19,22 @@ const WebAppHeader = () => {
     }
 
     const search = async() => {
-        const userData = JSON.parse(sessionStorage.getItem("smartFsUser") || "{}");
+        const userData = getUserData();
+        if (!userData || !userData.id) {
+            console.error("No user session found.");
+            return;
+        }
 
-        const token = userData.token;
         const userId = userData.id;
+
+        // Get valid token (automatically refreshes if expired)
+        let token: string;
+        try {
+            token = await getValidToken();
+        } catch (error) {
+            console.error("Error getting valid token:", error);
+            return;
+        }
 
         console.log("searched query: " + searchQuery);
         toggleSearchWindow();

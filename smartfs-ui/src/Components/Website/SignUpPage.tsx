@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {getAuth, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup} from "firebase/auth";
 import app from '../../Firebase/firebase.config.ts';
 
@@ -8,6 +8,16 @@ import "./websiteStyles.css";
 import WebsiteHeader from './WebsiteHeader.tsx';
 
 const SignUpPage = () => {
+    useEffect(() => {
+        // Add class to body to enable scrolling on auth pages
+        document.body.classList.add('website-page');
+        document.documentElement.classList.add('website-page');
+        return () => {
+            // Remove class when component unmounts
+            document.body.classList.remove('website-page');
+            document.documentElement.classList.remove('website-page');
+        };
+    }, []);
 
     const [userDate, setUserData] = useState({
         name: "",
@@ -87,14 +97,35 @@ const SignUpPage = () => {
     return (
         <>
             <WebsiteHeader/>
-            <div>
+            <div className='auth-page-container'>
                 <div className='authDiv'>
                     <h4>SIGN UP</h4>
-                    <input className='authInput' name='name' type='name' value={userDate.name} placeholder='Name' onChange={handleChange}/>
-                    <input className='authInput' name='email' type='email' value={userDate.email} placeholder='Email' onChange={handleChange}/>
-                    <input className='authInput' name='password' type='password' value={userDate.password} placeholder='Password' onChange={handleChange}/>
+                    <input 
+                        className='authInput' 
+                        name='name' 
+                        type='text' 
+                        value={userDate.name} 
+                        placeholder='Name' 
+                        onChange={handleChange}
+                    />
+                    <input 
+                        className='authInput' 
+                        name='email' 
+                        type='email' 
+                        value={userDate.email} 
+                        placeholder='Email' 
+                        onChange={handleChange}
+                    />
+                    <input 
+                        className='authInput' 
+                        name='password' 
+                        type='password' 
+                        value={userDate.password} 
+                        placeholder='Password' 
+                        onChange={handleChange}
+                    />
                     <button className='btn btn-primary' onClick={loginByPassword}>Sign Up</button>
-                    OR
+                    <span>OR</span>
                     <button className='btn btn-outline-primary btn-auth' onClick={signUpByGoogle}>Sign Up using Google</button>
                     <button className='btn btn-outline-dark btn-auth' onClick={() => {window.location.href = "/signin"}}>Already have an account? Sign In here</button>
                 </div>

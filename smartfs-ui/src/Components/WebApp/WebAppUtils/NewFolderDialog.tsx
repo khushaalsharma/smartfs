@@ -1,8 +1,8 @@
 import React, { use, useEffect, useState } from 'react';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./webAppUtilsStyles.css";
-
 import axios from 'axios';
+import { getValidToken, getUserData } from '../../../Utils/tokenUtils.ts';
 
 interface FolderDivProps {
     changeFolderDialogState: (newFileDialog: boolean) => void;
@@ -14,17 +14,23 @@ const NewFolderDialog = ({changeFolderDialogState}: FolderDivProps) => {
     const [parentFolderId, setParentFolderId] = useState<number | null>(null);
     const [folders, setFolders] = useState<Map<number, string>>(new Map());
     const [userId, setUserId] = useState<string | null>(null);
-    const [token, setToken] = useState<string | null>(null);
 
     const getAllFolders = async() => {
-        const sessionData = sessionStorage.getItem("smartFsUser");
-        const userId = sessionData ? JSON.parse(sessionData).id : null;
-        const token = sessionData ? JSON.parse(sessionData).token : null;
+        const userData = getUserData();
+        if (!userData || !userData.id) {
+            console.error("User ID not found");
+            return;
+        }
 
+        const userId = userData.id;
         setUserId(userId);
 
-        if (!userId) {
-            console.error("User ID not found");
+        // Get valid token (automatically refreshes if expired)
+        let token: string;
+        try {
+            token = await getValidToken();
+        } catch (error) {
+            console.error("Error getting valid token:", error);
             return;
         }
 
@@ -55,30 +61,36 @@ const NewFolderDialog = ({changeFolderDialogState}: FolderDivProps) => {
     }, []);
 
     const handleNewFolder = async() => {
-        if(!userId){
-            const sessionData = sessionStorage.getItem("smartFsUser");
-            const userId = sessionData ? JSON.parse(sessionData).id : null;
-            const jwtToken = sessionData ? JSON.parse(sessionData).token : null;
-            if(!userId){
+        let currentUserId = userId;
+        if(!currentUserId){
+            const userData = getUserData();
+            if (!userData || !userData.id) {
                 console.error("User ID not found");
                 return;
             }
-            else{
-                setUserId(userId);
-                setToken(jwtToken);
-            }
+            currentUserId = userData.id;
+            setUserId(currentUserId);
+        }
+
+        // Get valid token (automatically refreshes if expired)
+        let validToken: string;
+        try {
+            validToken = await getValidToken();
+        } catch (error) {
+            console.error("Error getting valid token:", error);
+            return;
         }
 
         try{
             await axios.post(`${process.env.REACT_APP_SERVER_URL}/folder/new`, 
                 {
                     folderName: folderName,
-                    folderOwner: userId,
+                    folderOwner: currentUserId,
                     parentId: parentFolderId !== 0 ? parentFolderId : null
                 },
                 {
                     headers: {
-                        Authorization: `Bearer ${token}`
+                        Authorization: `Bearer ${validToken}`
                     }
                 }
             ).then((response) => {

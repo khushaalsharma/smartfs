@@ -3,27 +3,32 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./contentPageStyles.css";
 import LiveArea from './LiveArea.tsx';
 
+interface PathItem {
+  id: string;
+  name: string;
+}
+
 const ContentPage = () => {
   const [currPath, setCurrPath] = useState("root");
   const [curr, setCurr] = useState<string>("root");
-  const [pathStack, setPathStack] = useState<string[]>(["root"]);
+  const [pathStack, setPathStack] = useState<PathItem[]>([{ id: "root", name: "root" }]);
 
   const handleBack = () => {
     if (pathStack.length > 1) {
       const newStack = [...pathStack];
       newStack.pop(); // remove current folder
-      const newCurr = newStack[newStack.length - 1];
+      const previousFolder = newStack[newStack.length - 1];
       setPathStack(newStack);
-      setCurr(newCurr);
-      setCurrPath(newStack.join("/"));
+      setCurr(previousFolder.id);
+      setCurrPath(newStack.map(item => item.name).join("/"));
     }
   };
 
   const handleFolderClick = (folderId: string, folderName: string) => {
-    const newStack = [...pathStack, folderName];
+    const newStack = [...pathStack, { id: folderId, name: folderName }];
     setPathStack(newStack);
     setCurr(folderId);
-    setCurrPath(newStack.join("/"));
+    setCurrPath(newStack.map(item => item.name).join("/"));
   };
 
   return (
