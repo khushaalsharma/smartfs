@@ -51,8 +51,12 @@ const WebAppHeader = () => {
             });
 
             if(response != null){
-                console.log(response);
-                setSearchedFiles(response.data);
+                if(Array.isArray(response.data)){
+                    setSearchedFiles(response.data);
+                }else{
+                    console.error(response.data);
+                    setSearchedFiles([]);
+                }
             }
         }catch(e){
             console.log(e);

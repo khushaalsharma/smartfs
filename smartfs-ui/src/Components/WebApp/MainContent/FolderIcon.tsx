@@ -6,7 +6,7 @@ import { folderProps } from './folder.interface';
 
 const FolderIcon: React.FC<folderProps> = ({ folderName, folderId, parentId, createdAt, updatedAt }) => {
     return (
-        <div className='item-box'>
+        <div className='folder-item'>
             <i className="fa-solid fa-folder fa-6x"></i>
             <strong className='item-name'>{folderName}</strong>
         </div>

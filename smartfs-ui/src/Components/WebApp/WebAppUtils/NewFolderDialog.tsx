@@ -86,7 +86,9 @@ const NewFolderDialog = ({changeFolderDialogState}: FolderDivProps) => {
                 {
                     folderName: folderName,
                     folderOwner: currentUserId,
-                    parentId: parentFolderId !== 0 ? parentFolderId : null
+                    parentId: parentFolderId === 0 ? null : {
+                        folderId: parentFolderId
+                    }
                 },
                 {
                     headers: {
@@ -95,6 +97,16 @@ const NewFolderDialog = ({changeFolderDialogState}: FolderDivProps) => {
                 }
             ).then((response) => {
                 console.log("Folder created successfully: ", response.data);
+
+                //update the cache 
+                const cache = JSON.parse(localStorage.getItem("filesFolderMap") || "{}");
+                if(cache !== null && parentFolderId !== null && cache[parentFolderId.toString()]){
+                    cache[parentFolderId.toString()].folders.push(response.data);
+                }else if(cache && parentFolderId === null){
+                    cache["root"].folders.push(response.data);
+                }
+
+                localStorage.setItem("filesFolderMap", JSON.stringify(cache));
                 changeFolderDialogState(false);
             }).catch((error) => {
                 console.error("Error in folder creation: ", error);

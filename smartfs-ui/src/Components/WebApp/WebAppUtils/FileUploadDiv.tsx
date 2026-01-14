@@ -109,10 +109,12 @@ const FileUploadDiv = ({ openFileDialog }: FileUploadDivProps) => {
         
         if (folder_id !== null && folder_id !== 0) {
             payloadData.folderId = {
-                folderId: folder_id
+                parentId: {
+                    folderId: folder_id
+                }
             };
         } else {
-            payloadData.folderId = null;
+            payloadData.parentId = null;
         }
         
         console.log("Uploading file with payload:", JSON.stringify(payloadData), "folder_id state:", folder_id);
@@ -133,6 +135,15 @@ const FileUploadDiv = ({ openFileDialog }: FileUploadDivProps) => {
 
             window.alert("File uploaded successfully.");
             // Reset state after successful upload
+            //update the cache
+            const filesCache = JSON.parse(localStorage.getItem("filesFolderMap") || "{}");
+            if(filesCache !== null && folder_id !== null &&filesCache[folder_id?.toString()]){
+                filesCache[folder_id.toString()].files.push(response.data);
+            }else if(filesCache && folder_id === null){
+                filesCache["root"].files.push(response.data);
+            }
+
+            localStorage.setItem("filesFolderMap", JSON.stringify(filesCache));
             setFile(null);
             setFolderId(null);
             openFileDialog(false);

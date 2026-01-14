@@ -181,6 +181,7 @@ const LiveArea: React.FC<LiveAreaProps> = ({ curr, onFolderClick }) => {
                 key={`folder-${item.folderId}`}
                 onClick={() => handleFolderClick(item)}
                 style={{ cursor: 'pointer' }}
+                className='folder-box'
               >
                 <FolderIcon {...item} />
               </div>

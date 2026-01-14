@@ -18,6 +18,7 @@ export default function Sidebar({ openFileDialog, openFolderDialog }: SidebarPro
       await signOut(auth);
       // Clear sessionStorage
       sessionStorage.removeItem("smartFsUser");
+      localStorage.removeItem("filesFolderMap");
       // Redirect to signin page
       window.location.href = "/signin";
     } catch (error) {
