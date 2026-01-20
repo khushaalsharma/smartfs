@@ -10,10 +10,12 @@ const WebAppHeader = () => {
     const [searchWindowVisible,setSearchWindowVisible] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [searchedFiles, setSearchedFiles] = useState<fileProps[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
 
     const toggleSearchWindow = () => {
         if(searchWindowVisible){
             setSearchedFiles([]);
+            setIsSearching(false);
         }
         setSearchWindowVisible(!searchWindowVisible);
     }
@@ -37,7 +39,9 @@ const WebAppHeader = () => {
         }
 
         console.log("searched query: " + searchQuery);
-        toggleSearchWindow();
+        setSearchWindowVisible(true);
+        setIsSearching(true);
+        setSearchedFiles([]);
 
         try{
             const response = await axios.post(`${process.env.REACT_APP_SERVER_URL}/file/search`, {
@@ -60,9 +64,11 @@ const WebAppHeader = () => {
             }
         }catch(e){
             console.log(e);
+            setSearchedFiles([]);
+        } finally {
+            setIsSearching(false);
         }
     }
-
     
     const searchWindow = () => {
         return (
@@ -73,12 +79,22 @@ const WebAppHeader = () => {
                     </div>
                     <div className='search-window-content'>
                         <div className='search-grid'>
-                            {searchedFiles.length !== 0 ? 
+                            {isSearching ? (
+                                <div className="text-center py-4">
+                                    <div className="spinner-border text-primary" role="status">
+                                        <span className="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p className="mt-2">Searching...</p>
+                                </div>
+                            ) : searchedFiles.length !== 0 ? (
                                 searchedFiles.map((item) => (
                                     <FileIcon key={`file-${item.fileId}`} {...item}/>
                                 ))
-                                : <h4>No files found 😑</h4>
-                            }
+                            ) : (
+                                <div className="text-center py-4">
+                                    <p className="text-muted">No files found</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                     <div className='search-window-footer'>

@@ -114,7 +114,7 @@ const FileUploadDiv = ({ openFileDialog }: FileUploadDivProps) => {
                 }
             };
         } else {
-            payloadData.parentId = null;
+            payloadData.folderId = null;
         }
         
         console.log("Uploading file with payload:", JSON.stringify(payloadData), "folder_id state:", folder_id);

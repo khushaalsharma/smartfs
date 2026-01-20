@@ -1,6 +1,9 @@
 package com.smartfs.api.managers;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.grpc.Collections.*;
 import jakarta.annotation.PostConstruct;
@@ -39,10 +42,22 @@ public class QdrantManager {
         }
     }
 
-    public boolean checkCollection(String collectionName){
+    public void checkCollection(String collectionName){
         try{
             ListenableFuture<Collections.CollectionInfo> collection = qdrantClient.getCollectionInfoAsync(collectionName);
-            return (collection != null);
+
+            Futures.addCallback(collection, new FutureCallback<CollectionInfo>() {
+                @Override
+                public void onSuccess(CollectionInfo result) {
+                    if (result.getPointsCount() > -1) System.out.println("collection found");
+                    else System.out.println("collection not available");
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    t.printStackTrace();
+                }
+            }, MoreExecutors.directExecutor());
         } catch (RuntimeException e) {
             throw new RuntimeException(e);
         }
@@ -58,10 +73,19 @@ public class QdrantManager {
                     .putAllPayload(convertPayload((payload)))
                     .build();
 
-            var output = qdrantClient.upsertAsync(collectionName, List.of(point));
-            if(output.isDone()){
-                System.out.println("Insertion complete at Qdrant");
-            }
+            ListenableFuture<Points.UpdateResult> insertedPoint = qdrantClient.upsertAsync(collectionName, List.of(point));
+            Futures.addCallback(insertedPoint, new FutureCallback<Points.UpdateResult>() {
+                @Override
+                public void onSuccess(Points.UpdateResult result) {
+                    System.out.println(result.getOperationId());
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    System.out.println("failed to insert data");
+                    t.printStackTrace();
+                }
+            }, MoreExecutors.directExecutor());
         } catch (RuntimeException e) {
             throw new RuntimeException(e);
         }
@@ -109,6 +133,7 @@ public class QdrantManager {
         try {
             System.out.println("Checking health");
             var output = qdrantClient.healthCheckAsync().get();
+            checkCollection("file_chunk");
 
             return output != null;
         } catch (ExecutionException e) {

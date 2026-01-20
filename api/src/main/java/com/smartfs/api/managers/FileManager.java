@@ -36,6 +36,9 @@ public class FileManager {
     @Autowired
     private QdrantManager qdrantManager;
 
+    @Autowired
+    private SupabaseManager supabaseManager;
+
     public FileData saveFileMetaData(FileData newFileData){
         try {
             return fileRepository.save(newFileData);
@@ -123,32 +126,13 @@ public class FileManager {
         return chunks;
     }
 
-    private String saveFileToDisk(MultipartFile file) throws IOException {
-        Path uploadDir = Paths.get("uploads");
-
-        // Create uploads directory if it doesn't exist
-        if (!Files.exists(uploadDir)) {
-            Files.createDirectories(uploadDir);
-        }
-
-        // Construct a unique file name to avoid collisions
+    public FileData uploadFile(MultipartFile file, NewFileDTO fileDto) throws Exception {
         String originalFilename = file.getOriginalFilename();
         String timestamp = String.valueOf(System.currentTimeMillis());
         String safeFileName = timestamp + "_" + (originalFilename != null ? originalFilename : "uploadedFile");
+        //uploading it to the cloud bucket
+        String filePath = supabaseManager.uploadFile(file, safeFileName);
 
-        // Resolve the file path
-        Path targetPath = uploadDir.resolve(safeFileName);
-
-        // Copy file to target location (replace existing if needed)
-        Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-
-        // Return the absolute path of the stored file
-        return targetPath.toAbsolutePath().toString();
-    }
-
-
-    public FileData uploadFile(MultipartFile file, NewFileDTO fileDto) throws Exception {
-        String filePath = saveFileToDisk(file);
         FileData newFile = new FileData();
 
         newFile.setFileAuthor(fileDto.getAuthorId());
@@ -170,55 +154,24 @@ public class FileManager {
         return newFile;
     }
 
-    private List<Integer> finalFileId(List<Points.ScoredPoint> chunksFromQdrant){
-        List<Integer> fileIds = new ArrayList<>();
-        Map<Long, chunkClass> allIds = new HashMap<>();
+    private List<Integer> finalFileId(List<Points.ScoredPoint> chunksFromQdrant) {
+        // Group chunks by fileId and track the best score for each file
+        Map<Long, Float> fileToBestScore = new HashMap<>();
 
-        //building the map to be processed for filtering/sorting
         chunksFromQdrant.stream()
-                .forEach(x -> {
-                    Map<String, Object> payloadMap = qdrantManager.convertPayloadToMap(x.getPayloadMap());
+                .forEach(chunk -> {
+                    Map<String, Object> payloadMap = qdrantManager.convertPayloadToMap(chunk.getPayloadMap());
                     Long fileId = (Long) payloadMap.get("fileId");
 
-                    if(allIds.containsKey(fileId)){
-                        chunkClass obj = allIds.get(fileId);
-                        Float newScore = (float) (((obj.getScore()*obj.getCount()) + x.getScore())/(obj.getCount() + 1));
-                        Integer count = obj.getCount() + 1;
-                        allIds.put(fileId, new chunkClass(newScore, count));
-                    }else{
-                        allIds.put(fileId, new chunkClass(x.getScore(), 1));
-                    }
+                    fileToBestScore.merge(fileId, chunk.getScore(), Math::max);
                 });
 
-        //process the map by score and count
-        List<Map.Entry<Long, chunkClass>> sortedEntries = allIds.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue(
-                        Comparator.comparing(chunkClass::getScore).reversed()  // Score first, descending
-                                .thenComparing(chunkClass::getCount, Comparator.reverseOrder())  // Then count, descending
-                ))
+        // Sort by best score and return top 5 files
+        return fileToBestScore.entrySet().stream()
+                .sorted(Map.Entry.<Long, Float>comparingByValue().reversed())
+                .limit(5)
+                .map(e -> e.getKey().intValue())
                 .collect(Collectors.toList());
-
-        // NEW APPROACH: Filter by similarity score threshold
-        fileIds = sortedEntries.stream()
-                .filter(x -> {
-                    Float avgScore = x.getValue().getScore();
-                    Integer matchedChunks = x.getValue().getCount();
-
-                    Optional<FileData> file = fileRepository.findById(x.getKey().intValue());
-                    if(file.isEmpty()) return false;
-
-                    Integer totalChunks = file.get().getChunks();
-                    float coverage = (float) matchedChunks / totalChunks;
-
-                    // Require high score AND reasonable coverage
-                    return avgScore >= 0.5f && (coverage >= 0.15f || matchedChunks >= totalChunks/2);
-                    // Means: 15% of chunks OR at least 3 chunks, whichever is MORE
-                })
-                .limit(5)  // Only return top 5 files
-                .map(x -> x.getKey().intValue())
-                .collect(Collectors.toList());
-
-        return fileIds;
     }
 
     public List<FileData> searchFile(SearchDTO queryString) throws ExecutionException, InterruptedException {

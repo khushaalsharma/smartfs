@@ -8,4 +8,5 @@ export interface fileProps{
     fileSize: number;
     createdAt: string;
     updatedAt: string;
+    mimeType: string;
 }

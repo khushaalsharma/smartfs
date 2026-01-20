@@ -411,10 +411,3 @@ body::before {
   align-items: start;
   width: 100%;
 }
-
-.search-grid h4 {
-  grid-column: 1 / -1;
-  text-align: center;
-  margin: 2rem 0;
-  color: #666;
-}

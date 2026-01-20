@@ -86,7 +86,7 @@ const NewFolderDialog = ({changeFolderDialogState}: FolderDivProps) => {
                 {
                     folderName: folderName,
                     folderOwner: currentUserId,
-                    parentId: parentFolderId === 0 ? null : {
+                    parentId: parentFolderId === null ? null : {
                         folderId: parentFolderId
                     }
                 },
