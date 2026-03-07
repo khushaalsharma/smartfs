@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {getAuth, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup} from "firebase/auth";
 import app from '../../Firebase/firebase.config.ts';
 
@@ -25,16 +25,16 @@ const SignUpPage = () => {
         password: ""
     });
 
-    const [authToken, setAuthToken] = useState("");
+    //const [authToken, setAuthToken] = useState("");
 
-    function handleChange(e){
+    function handleChange(e: any){
         e.preventDefault();
 
         const {name, value} = e.target;
         setUserData({...userDate, [name]: value});
     }
 
-    function loginByPassword(e){
+    function loginByPassword(e: any){
         e.preventDefault();
         const auth = getAuth(app);
 
@@ -56,24 +56,24 @@ const SignUpPage = () => {
                         window.location.href = "/signin";
                     })
                     .catch((error) => {
-                        console.log("can't fetch the token: ", error);
+                        //console.log("can't fetch the token: ", error);
                     })
             })
             .catch((error) => {
                 alert("signup failed")
-                console.log("error in firebase login by password: " + error);
+                //console.log("error in firebase login by password: " + error);
             })
     }
 
-    function signUpByGoogle(e){
+    function signUpByGoogle(e: any){
         e.preventDefault();
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
         signInWithPopup(auth, provider)
             .then((result) => {
-                const credential = GoogleAuthProvider.credentialFromResult(result);
-                const token = credential?.accessToken;
+                //const credential = GoogleAuthProvider.credentialFromResult(result);
+                //const token = credential?.accessToken;
                 const user = result.user;
 
                 const sessionData = {
@@ -85,12 +85,12 @@ const SignUpPage = () => {
 
                 sessionStorage.setItem("smartFsUser", JSON.stringify(sessionData));
 
-                //console.log(token, result.user);
+                ////console.log(token, result.user);
                 alert("sign up by google done");
                 window.location.href = "/home";
             })
             .catch((error) => {
-                console.error(error);
+                //console.error(error);
             })
     }
 

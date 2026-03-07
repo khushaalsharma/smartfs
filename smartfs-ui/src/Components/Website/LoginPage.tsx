@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider} from "firebase/auth";
 import app from '../../Firebase/firebase.config.ts';
 
@@ -24,7 +24,7 @@ const LogInPage = () => {
         password: ""
     });
 
-    const [authToken, setAuthToken] = useState("");
+    //const [authToken, setAuthToken] = useState("");
 
     function handleChange(e: any){
         e.preventDefault();
@@ -56,12 +56,12 @@ const LogInPage = () => {
                         window.location.href = "/home";
                     })
                     .catch((error) => {
-                        console.log("can't fetch the token: ", error);
+                        //console.log("can't fetch the token: ", error);
                     })
             })
             .catch((error) => {
                 alert("can't login");
-                console.log("Error in signing in using email password: " + error);
+                //console.log("Error in signing in using email password: " + error);
             })
     }
 
@@ -71,8 +71,8 @@ const LogInPage = () => {
         const provider = new GoogleAuthProvider();
         signInWithPopup(auth, provider)
             .then((result) => {
-                const credential = GoogleAuthProvider.credentialFromResult(result);
-                const token = credential?.accessToken;
+                //const credential = GoogleAuthProvider.credentialFromResult(result);
+                //const token = credential?.accessToken;
                 const user = result.user;
                 
                 const sessionData = {
@@ -85,13 +85,13 @@ const LogInPage = () => {
 
                 sessionStorage.setItem("smartFsUser", JSON.stringify(sessionData));
 
-                //console.log(token, result.user);
+                ////console.log(token, result.user);
                 alert("sign in by google done");
                 window.location.href = "/home";
             })
             .catch((error) => {
                 alert("Can't login by Google right now");
-                console.log("error in logging in using Google: " + error);
+                //console.log("error in logging in using Google: " + error);
             })
     }
 

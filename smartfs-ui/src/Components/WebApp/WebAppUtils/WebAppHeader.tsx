@@ -23,7 +23,7 @@ const WebAppHeader = () => {
     const search = async() => {
         const userData = getUserData();
         if (!userData || !userData.id) {
-            console.error("No user session found.");
+            //console.error("No user session found.");
             return;
         }
 
@@ -34,11 +34,11 @@ const WebAppHeader = () => {
         try {
             token = await getValidToken();
         } catch (error) {
-            console.error("Error getting valid token:", error);
+            //console.error("Error getting valid token:", error);
             return;
         }
 
-        console.log("searched query: " + searchQuery);
+        //console.log("searched query: " + searchQuery);
         setSearchWindowVisible(true);
         setIsSearching(true);
         setSearchedFiles([]);
@@ -58,12 +58,12 @@ const WebAppHeader = () => {
                 if(Array.isArray(response.data)){
                     setSearchedFiles(response.data);
                 }else{
-                    console.error(response.data);
+                    //console.error(response.data);
                     setSearchedFiles([]);
                 }
             }
         }catch(e){
-            console.log(e);
+            //console.log(e);
             setSearchedFiles([]);
         } finally {
             setIsSearching(false);

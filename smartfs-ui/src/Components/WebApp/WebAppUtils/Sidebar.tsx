@@ -22,7 +22,7 @@ export default function Sidebar({ openFileDialog, openFolderDialog }: SidebarPro
       // Redirect to signin page
       window.location.href = "/signin";
     } catch (error) {
-      console.error("Error signing out: ", error);
+      //console.error("Error signing out: ", error);
       // Even if signOut fails, clear sessionStorage and redirect
       sessionStorage.removeItem("smartFsUser");
       window.location.href = "/signin";

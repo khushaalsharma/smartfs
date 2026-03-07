@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./contentPageStyles.css";
@@ -23,9 +23,9 @@ export const invalidateFolderCache = (folderId: string | null) => {
     const cacheKey = folderId || "root";
     delete cache[cacheKey];
     localStorage.setItem("filesFolderMap", JSON.stringify(cache));
-    console.log("Cache invalidated for folder:", cacheKey);
+    //console.log("Cache invalidated for folder:", cacheKey);
   } catch (e) {
-    console.error("Error invalidating cache:", e);
+    //console.error("Error invalidating cache:", e);
   }
 };
 
@@ -43,79 +43,8 @@ const LiveArea: React.FC<LiveAreaProps> = ({ curr, onFolderClick }) => {
   const [fileList, setFileList] = useState<fileProps[]>([]);
   const [mergedList, setMergedList] = useState<Item[]>([]);
 
-  useEffect(() => {
-    // Clear previous folder/file lists when curr changes to prevent showing stale data
-    setFolderList([]);
-    setFileList([]);
-    
-    // Fetch data for the current folder
-    const currentFolderId = curr || "root";
-    fetchFoldersAndFiles(currentFolderId);
-  }, [curr]);
 
-  useEffect(() => {
-    const combined: Item[] = [
-      ...folderList.map(f => ({ ...f, type: "folder" as const })),
-      ...fileList.map(f => ({ ...f, type: "file" as const }))
-    ];
-    setMergedList(combined);
-  }, [folderList, fileList]);
-
-  const fetchFoldersAndFiles = async (folderId: string) => {
-    // Ensure we're fetching for the correct folder
-    const currentFolderId = folderId || "root";
-    console.log("Fetching folders and files for:", currentFolderId);
-    
-    // Load cache from localStorage
-    let cache: Record<string, { folders: folderProps[]; files: fileProps[] }> = {};
-    const cacheStr = localStorage.getItem("filesFolderMap");
-    
-    const userData = getUserData();
-    if (!userData || !userData.id) {
-      console.error("No user session found.");
-      return;
-    }
-    
-    const userId = userData.id;
-    
-    // Get valid token (automatically refreshes if expired)
-    let token: string;
-    try {
-      token = await getValidToken();
-    } catch (error) {
-      console.error("Error getting valid token:", error);
-      return;
-    }
-
-    // Load existing cache
-    if (cacheStr) {
-      try {
-        cache = JSON.parse(cacheStr);
-      } catch (e) {
-        console.error("Invalid cache format, starting fresh:", e);
-        cache = {};
-      }
-    }
-
-    // Check if we have cached data for the current folder
-    if (cache[currentFolderId] && cache[currentFolderId].folders && cache[currentFolderId].files) {
-      console.log("Using cached data for folder:", currentFolderId);
-      // Show cached data immediately for instant UI
-      setFolderList(cache[currentFolderId].folders);
-      setFileList(cache[currentFolderId].files);
-      
-      // Fetch fresh data in background to update cache and UI if data changed
-      // This ensures cache stays fresh while providing instant UI updates
-      fetchAndUpdateCache(userId, token, currentFolderId, cache, currentFolderId).catch(err => {
-        console.error("Background fetch failed:", err);
-      });
-    } else {
-      // No cache available, fetch fresh data
-      await fetchAndUpdateCache(userId, token, currentFolderId, cache, currentFolderId);
-    }
-  };
-
-  const fetchAndUpdateCache = async (
+  const fetchAndUpdateCache = useCallback(async (
     userId: string,
     token: string,
     cacheKey: string,
@@ -145,27 +74,100 @@ const LiveArea: React.FC<LiveAreaProps> = ({ curr, onFolderClick }) => {
       if (currentFolderId === expectedFolderId) {
         setFolderList(folders);
         setFileList(files);
-        console.log("Updated UI for folder:", expectedFolderId);
+        //console.log("Updated UI for folder:", expectedFolderId);
       } else {
-        console.log("Skipping state update - folder changed from", expectedFolderId, "to", currentFolderId);
+        //console.log("Skipping state update - folder changed from", expectedFolderId, "to", currentFolderId);
       }
 
       // Always update cache regardless of current folder (cache is shared)
       cache[cacheKey] = { folders, files };
       localStorage.setItem("filesFolderMap", JSON.stringify(cache));
 
-      console.log("Cache updated for folder:", cacheKey);
+      //console.log("Cache updated for folder:", cacheKey);
     } catch (error) {
-      console.error("Error fetching folder or file data:", error);
+      //console.error("Error fetching folder or file data:", error);
       // If fetch fails and we have cache, keep using cache
       if (cache[cacheKey]) {
-        console.log("Fetch failed, keeping cached data");
+        //console.log("Fetch failed, keeping cached data");
       }
     }
-  };
+  }, [curr]);
+
+  const fetchFoldersAndFiles = useCallback(async (folderId: string) => {
+    // Ensure we're fetching for the correct folder
+    const currentFolderId = folderId || "root";
+    //console.log("Fetching folders and files for:", currentFolderId);
+    
+    // Load cache from localStorage
+    let cache: Record<string, { folders: folderProps[]; files: fileProps[] }> = {};
+    const cacheStr = localStorage.getItem("filesFolderMap");
+    
+    const userData = getUserData();
+    if (!userData || !userData.id) {
+      //console.error("No user session found.");
+      return;
+    }
+    
+    const userId = userData.id;
+    
+    // Get valid token (automatically refreshes if expired)
+    let token: string;
+    try {
+      token = await getValidToken();
+    } catch (error) {
+      //console.error("Error getting valid token:", error);
+      return;
+    }
+
+    // Load existing cache
+    if (cacheStr) {
+      try {
+        cache = JSON.parse(cacheStr);
+      } catch (e) {
+        //console.error("Invalid cache format, starting fresh:", e);
+        cache = {};
+      }
+    }
+
+    // Check if we have cached data for the current folder
+    if (cache[currentFolderId] && cache[currentFolderId].folders && cache[currentFolderId].files) {
+      //console.log("Using cached data for folder:", currentFolderId);
+      // Show cached data immediately for instant UI
+      setFolderList(cache[currentFolderId].folders);
+      setFileList(cache[currentFolderId].files);
+      
+      // Fetch fresh data in background to update cache and UI if data changed
+      // This ensures cache stays fresh while providing instant UI updates
+      fetchAndUpdateCache(userId, token, currentFolderId, cache, currentFolderId).catch(err => {
+        //console.error("Background fetch failed:", err);
+      });
+    } else {
+      // No cache available, fetch fresh data
+      await fetchAndUpdateCache(userId, token, currentFolderId, cache, currentFolderId);
+    }
+  }, [fetchAndUpdateCache]);
+
+  useEffect(() => {
+    // Clear previous folder/file lists when curr changes to prevent showing stale data
+    setFolderList([]);
+    setFileList([]);
+    
+    // Fetch data for the current folder
+    const currentFolderId = curr || "root";
+    fetchFoldersAndFiles(currentFolderId);
+  }, [curr, fetchFoldersAndFiles]);
+
+  useEffect(() => {
+    const combined: Item[] = [
+      ...folderList.map(f => ({ ...f, type: "folder" as const })),
+      ...fileList.map(f => ({ ...f, type: "file" as const }))
+    ];
+    setMergedList(combined);
+  }, [folderList, fileList]);
+
 
   const handleFolderClick = (folderItem: folderProps) => {
-    console.log("Folder clicked:", folderItem.folderId);
+    //console.log("Folder clicked:", folderItem.folderId);
     onFolderClick(folderItem.folderId.toString(), folderItem.folderName);
   };
 

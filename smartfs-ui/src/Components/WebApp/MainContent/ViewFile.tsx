@@ -6,7 +6,7 @@ import 'react-pdf/dist/Page/TextLayer.css';
 // Configure PDF.js worker - CRITICAL for PDF rendering
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
-function TextViewer({ fileUrl }) {
+function TextViewer({ fileUrl }: { fileUrl: string }) {
     const [content, setContent] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -26,7 +26,7 @@ function TextViewer({ fileUrl }) {
           setLoading(false);
         })
         .catch(err => {
-          console.error('Error loading text file:', err);
+          //console.error('Error loading text file:', err);
           setError(err.message || 'Failed to load file');
           setLoading(false);
         });
@@ -75,7 +75,7 @@ function TextViewer({ fileUrl }) {
     );
 }
 
-function FileViewer({ fileUrl, fileType, fileName }) {
+function FileViewer({ fileUrl, fileType, fileName }: { fileUrl: string, fileType?: string, fileName?: string }) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -87,7 +87,7 @@ function FileViewer({ fileUrl, fileType, fileName }) {
   };
 
   const onDocumentLoadError = (error: Error) => {
-    console.error('PDF load error:', error);
+    //console.error('PDF load error:', error);
     setPdfError(error.message || 'Failed to load PDF');
     setPdfLoading(false);
   };

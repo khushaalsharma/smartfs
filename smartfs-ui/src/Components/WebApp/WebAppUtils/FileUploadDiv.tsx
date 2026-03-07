@@ -4,7 +4,7 @@ import "./webAppUtilsStyles.css";
 import axios from 'axios';
 import { getValidToken, getUserData } from '../../../Utils/tokenUtils.ts';
 
-import { fileProps } from '../MainContent/file.interface';
+//import { fileProps } from '../MainContent/file.interface';
 
 interface FileUploadDivProps {
     openFileDialog: (newFileDialog: boolean) => void;
@@ -18,7 +18,7 @@ const FileUploadDiv = ({ openFileDialog }: FileUploadDivProps) => {
     const getFoldersForDropDown = async () => {
         const userData = getUserData();
         if (!userData || !userData.id) {
-            console.error("No user session found.");
+            //console.error("No user session found.");
             return;
         }
 
@@ -29,7 +29,7 @@ const FileUploadDiv = ({ openFileDialog }: FileUploadDivProps) => {
         try {
             token = await getValidToken();
         } catch (error) {
-            console.error("Error getting valid token:", error);
+            //console.error("Error getting valid token:", error);
             return;
         }
 
@@ -48,7 +48,7 @@ const FileUploadDiv = ({ openFileDialog }: FileUploadDivProps) => {
             setFolders(folderMap);
 
         }catch(err){
-            console.error("Error fetching folders: ", err);
+            //console.error("Error fetching folders: ", err);
         }
     }
 
@@ -66,9 +66,9 @@ const FileUploadDiv = ({ openFileDialog }: FileUploadDivProps) => {
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if(event.target.files && event.target.files.length > 0){
-            console.log(event.target.files);
+            //console.log(event.target.files);
             setFile(event.target.files[0]);
-            console.log("file selected:", event.target.files[0].name);
+            //console.log("file selected:", event.target.files[0].name);
         }
     } 
 
@@ -89,7 +89,7 @@ const FileUploadDiv = ({ openFileDialog }: FileUploadDivProps) => {
         try {
             token = await getValidToken();
         } catch (error) {
-            console.error("Error getting valid token:", error);
+            //console.error("Error getting valid token:", error);
             window.alert("Authentication error. Please sign in again.");
             return;
         }
@@ -117,7 +117,7 @@ const FileUploadDiv = ({ openFileDialog }: FileUploadDivProps) => {
             payloadData.folderId = null;
         }
         
-        console.log("Uploading file with payload:", JSON.stringify(payloadData), "folder_id state:", folder_id);
+        //console.log("Uploading file with payload:", JSON.stringify(payloadData), "folder_id state:", folder_id);
 
         formData.append("data", JSON.stringify(payloadData));
 
@@ -148,7 +148,7 @@ const FileUploadDiv = ({ openFileDialog }: FileUploadDivProps) => {
             setFolderId(null);
             openFileDialog(false);
         } catch (error) {
-            console.error("Error uploading file:", error);
+            //console.error("Error uploading file:", error);
             window.alert("Error uploading file.");
         }
     };
@@ -170,7 +170,7 @@ const FileUploadDiv = ({ openFileDialog }: FileUploadDivProps) => {
                         const numValue = parseInt(value, 10);
                         setFolderId(isNaN(numValue) ? null : numValue);
                     }
-                    console.log("Folder selected:", value, "folder_id set to:", value === "root" || value === "" ? null : parseInt(value, 10));
+                    //console.log("Folder selected:", value, "folder_id set to:", value === "root" || value === "" ? null : parseInt(value, 10));
                 }}
             >
                 <option value="root">Root</option>

@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./webAppUtilsStyles.css";
 import axios from 'axios';
@@ -18,7 +18,7 @@ const NewFolderDialog = ({changeFolderDialogState}: FolderDivProps) => {
     const getAllFolders = async() => {
         const userData = getUserData();
         if (!userData || !userData.id) {
-            console.error("User ID not found");
+            //console.error("User ID not found");
             return;
         }
 
@@ -30,7 +30,7 @@ const NewFolderDialog = ({changeFolderDialogState}: FolderDivProps) => {
         try {
             token = await getValidToken();
         } catch (error) {
-            console.error("Error getting valid token:", error);
+            //console.error("Error getting valid token:", error);
             return;
         }
 
@@ -52,7 +52,7 @@ const NewFolderDialog = ({changeFolderDialogState}: FolderDivProps) => {
             setFolders(folderMap);
         }
         catch(err){
-            console.error("Error fetching folders: ", err);
+            //console.error("Error fetching folders: ", err);
         }
     }
 
@@ -65,7 +65,7 @@ const NewFolderDialog = ({changeFolderDialogState}: FolderDivProps) => {
         if(!currentUserId){
             const userData = getUserData();
             if (!userData || !userData.id) {
-                console.error("User ID not found");
+                //console.error("User ID not found");
                 return;
             }
             currentUserId = userData.id;
@@ -77,7 +77,7 @@ const NewFolderDialog = ({changeFolderDialogState}: FolderDivProps) => {
         try {
             validToken = await getValidToken();
         } catch (error) {
-            console.error("Error getting valid token:", error);
+            //console.error("Error getting valid token:", error);
             return;
         }
 
@@ -96,7 +96,7 @@ const NewFolderDialog = ({changeFolderDialogState}: FolderDivProps) => {
                     }
                 }
             ).then((response) => {
-                console.log("Folder created successfully: ", response.data);
+                //console.log("Folder created successfully: ", response.data);
 
                 //update the cache 
                 const cache = JSON.parse(localStorage.getItem("filesFolderMap") || "{}");
@@ -109,11 +109,11 @@ const NewFolderDialog = ({changeFolderDialogState}: FolderDivProps) => {
                 localStorage.setItem("filesFolderMap", JSON.stringify(cache));
                 changeFolderDialogState(false);
             }).catch((error) => {
-                console.error("Error in folder creation: ", error);
+                //console.error("Error in folder creation: ", error);
             });
         }
         catch(err){
-            console.error("Error creating new folder: ", err);
+            //console.error("Error creating new folder: ", err);
         }
     }
 
