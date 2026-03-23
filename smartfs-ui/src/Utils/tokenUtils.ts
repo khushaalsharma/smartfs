@@ -9,7 +9,7 @@ import app from "../Firebase/firebase.config.ts";
  * @returns Promise<string> - A valid Firebase ID token
  * @throws Error if user is not authenticated
  */
-export async function getValidToken(): Promise<string> {
+export async function getValidToken(navigate : any): Promise<string> {
   const auth = getAuth(app);
   
   // First check if user is already available
@@ -38,7 +38,7 @@ export async function getValidToken(): Promise<string> {
   if (!user) {
     // User is not authenticated, clear session and redirect to signin
     sessionStorage.removeItem("smartFsUser");
-    window.location.href = "/signin";
+    navigate("/signin");
     throw new Error("User is not authenticated");
   }
 
@@ -86,7 +86,7 @@ export async function getValidToken(): Promise<string> {
     console.error("Error getting token:", error);
     // If token fetch fails, clear session and redirect
     sessionStorage.removeItem("smartFsUser");
-    window.location.href = "/signin";
+    navigate("/signin");
     throw error;
   }
 }

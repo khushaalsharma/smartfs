@@ -3,6 +3,8 @@ import { getAuth, signOut } from "firebase/auth";
 import app from "../../../Firebase/firebase.config.ts";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./webAppUtilsStyles.css";
+import { useAuth } from "../../../Context/AuthContext.tsx";
+import { useNavigate } from "react-router-dom";
 
 interface SidebarProps {
     openFileDialog: (newFileDialog: boolean) => void;
@@ -10,22 +12,17 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ openFileDialog, openFolderDialog }: SidebarProps) {
+  const {logout} = useAuth();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
-      const auth = getAuth(app);
-      await signOut(auth);
-      // Clear sessionStorage
-      sessionStorage.removeItem("smartFsUser");
-      localStorage.removeItem("filesFolderMap");
-      // Redirect to signin page
-      window.location.href = "/signin";
+      await logout();
+      navigate("/signin");
     } catch (error) {
       //console.error("Error signing out: ", error);
-      // Even if signOut fails, clear sessionStorage and redirect
-      sessionStorage.removeItem("smartFsUser");
-      window.location.href = "/signin";
+      navigate("/signin");
     }
   };
 

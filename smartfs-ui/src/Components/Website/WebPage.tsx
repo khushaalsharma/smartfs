@@ -2,8 +2,11 @@ import React, { useEffect } from 'react';
 import "bootstrap/dist/css/bootstrap.css";
 import "./websiteStyles.css";
 import WebsiteHeader from './WebsiteHeader.tsx';
+import { useNavigate } from 'react-router-dom';
 
 const WebPage = () => {
+  const navigate = useNavigate();
+
   useEffect(() => {
     // Add class to body to enable scrolling on website pages
     document.body.classList.add('website-page');
@@ -33,13 +36,13 @@ const WebPage = () => {
                 <div className="hero-buttons">
                   <button 
                     className="btn btn-primary btn-hero-primary" 
-                    onClick={() => window.location.href = "/signup"}
+                    onClick={() => navigate("/signup")}
                   >
                     Get Started Free
                   </button>
                   <button 
                     className="btn btn-outline-primary btn-hero-secondary" 
-                    onClick={() => window.location.href = "/signin"}
+                    onClick={() => navigate("/signin")}
                   >
                     Sign In
                   </button>
@@ -141,7 +144,7 @@ const WebPage = () => {
               </p>
               <button 
                 className="btn btn-primary btn-cta" 
-                onClick={() => window.location.href = "/signup"}
+                onClick={() => navigate("/signup")}
               >
                 Create Your Free Account
               </button>

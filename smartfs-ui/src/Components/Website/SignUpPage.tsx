@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import {getAuth, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup} from "firebase/auth";
 import app from '../../Firebase/firebase.config.ts';
+import { useNavigate } from 'react-router-dom';
 
 //CSS
 import "bootstrap/dist/css/bootstrap.css";
@@ -8,6 +9,9 @@ import "./websiteStyles.css";
 import WebsiteHeader from './WebsiteHeader.tsx';
 
 const SignUpPage = () => {
+    
+    const navigate = useNavigate();
+
     useEffect(() => {
         // Add class to body to enable scrolling on auth pages
         document.body.classList.add('website-page');
@@ -53,7 +57,7 @@ const SignUpPage = () => {
 
                         sessionStorage.setItem("smartFsUser", JSON.stringify(userData));
                         alert("sign up complete");
-                        window.location.href = "/signin";
+                        navigate("/signin");
                     })
                     .catch((error) => {
                         //console.log("can't fetch the token: ", error);
@@ -87,7 +91,7 @@ const SignUpPage = () => {
 
                 ////console.log(token, result.user);
                 alert("sign up by google done");
-                window.location.href = "/home";
+                navigate("/home");
             })
             .catch((error) => {
                 //console.error(error);
@@ -127,7 +131,7 @@ const SignUpPage = () => {
                     <button className='btn btn-primary' onClick={loginByPassword}>Sign Up</button>
                     <span>OR</span>
                     <button className='btn btn-outline-primary btn-auth' onClick={signUpByGoogle}>Sign Up using Google</button>
-                    <button className='btn btn-outline-dark btn-auth' onClick={() => {window.location.href = "/signin"}}>Already have an account? Sign In here</button>
+                    <button className='btn btn-outline-dark btn-auth' onClick={() => {navigate("/signin")}}>Already have an account? Sign In here</button>
                 </div>
             </div>
         </>

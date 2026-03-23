@@ -3,6 +3,9 @@ import axios from 'axios';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./contentPageStyles.css";
 import { getValidToken, getUserData } from '../../../Utils/tokenUtils.ts';
+import { useAuth } from '../../../Context/AuthContext.tsx';
+import { useFileCache } from '../../../Context/FileCacheContext.tsx';
+import { useNavigate } from 'react-router-dom';
 
 import FileIcon from './FileIcon.tsx';
 import FolderIcon from './FolderIcon.tsx';
@@ -39,6 +42,10 @@ type Item =
   | ({ type: "file" } & fileProps);
 
 const LiveArea: React.FC<LiveAreaProps> = ({ curr, onFolderClick }) => {
+  const {user} = useAuth();
+  const {cache, updateCache} = useFileCache();
+  const navigate = useNavigate();
+
   const [folderList, setFolderList] = useState<folderProps[]>([]);
   const [fileList, setFileList] = useState<fileProps[]>([]);
   const [mergedList, setMergedList] = useState<Item[]>([]);
@@ -80,8 +87,7 @@ const LiveArea: React.FC<LiveAreaProps> = ({ curr, onFolderClick }) => {
       }
 
       // Always update cache regardless of current folder (cache is shared)
-      cache[cacheKey] = { folders, files };
-      localStorage.setItem("filesFolderMap", JSON.stringify(cache));
+      updateCache(cacheKey, {files, folders});
 
       //console.log("Cache updated for folder:", cacheKey);
     } catch (error) {
@@ -98,39 +104,21 @@ const LiveArea: React.FC<LiveAreaProps> = ({ curr, onFolderClick }) => {
     const currentFolderId = folderId || "root";
     //console.log("Fetching folders and files for:", currentFolderId);
     
-    // Load cache from localStorage
-    let cache: Record<string, { folders: folderProps[]; files: fileProps[] }> = {};
-    const cacheStr = localStorage.getItem("filesFolderMap");
-    
-    const userData = getUserData();
-    if (!userData || !userData.id) {
-      //console.error("No user session found.");
-      return;
-    }
-    
-    const userId = userData.id;
+    if(!user) return;
+    const userId = user.id;
     
     // Get valid token (automatically refreshes if expired)
     let token: string;
     try {
-      token = await getValidToken();
+      token = await getValidToken(navigate);
     } catch (error) {
       //console.error("Error getting valid token:", error);
       return;
     }
 
-    // Load existing cache
-    if (cacheStr) {
-      try {
-        cache = JSON.parse(cacheStr);
-      } catch (e) {
-        //console.error("Invalid cache format, starting fresh:", e);
-        cache = {};
-      }
-    }
-
-    // Check if we have cached data for the current folder
-    if (cache[currentFolderId] && cache[currentFolderId].folders && cache[currentFolderId].files) {
+    if(cache !== undefined){
+      // Check if we have cached data for the current folder
+    if (cache[currentFolderId]?.folders && cache[currentFolderId]?.files) {
       //console.log("Using cached data for folder:", currentFolderId);
       // Show cached data immediately for instant UI
       setFolderList(cache[currentFolderId].folders);
@@ -145,7 +133,8 @@ const LiveArea: React.FC<LiveAreaProps> = ({ curr, onFolderClick }) => {
       // No cache available, fetch fresh data
       await fetchAndUpdateCache(userId, token, currentFolderId, cache, currentFolderId);
     }
-  }, [fetchAndUpdateCache]);
+    }
+  }, [fetchAndUpdateCache, user, cache]);
 
   useEffect(() => {
     // Clear previous folder/file lists when curr changes to prevent showing stale data

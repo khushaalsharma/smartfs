@@ -4,6 +4,10 @@ import "./webAppUtilsStyles.css";
 import axios from 'axios';
 import { getValidToken, getUserData } from '../../../Utils/tokenUtils.ts';
 
+import { useAuth } from '../../../Context/AuthContext.tsx';
+import { useFileCache  } from '../../../Context/FileCacheContext.tsx';
+import { useNavigate } from 'react-router-dom';
+
 //import { fileProps } from '../MainContent/file.interface';
 
 interface FileUploadDivProps {
@@ -11,23 +15,23 @@ interface FileUploadDivProps {
 }
 
 const FileUploadDiv = ({ openFileDialog }: FileUploadDivProps) => {
+    const {user} = useAuth();
+    const {appendFile} = useFileCache();
+    const navigate = useNavigate();
+
     const [folders, setFolders] = useState<Map<number, string>>(new Map());
     const [folder_id, setFolderId] = useState<number | null>(null); // null means root
     const [file, setFile] = useState<File | null>(null);
 
     const getFoldersForDropDown = async () => {
-        const userData = getUserData();
-        if (!userData || !userData.id) {
-            //console.error("No user session found.");
-            return;
-        }
+       if(!user) return ;
 
-        const userId = userData.id;
-        
+       const userId = user.id;
+
         // Get valid token (automatically refreshes if expired)
         let token: string;
         try {
-            token = await getValidToken();
+            token = await getValidToken(navigate);
         } catch (error) {
             //console.error("Error getting valid token:", error);
             return;
@@ -78,16 +82,13 @@ const FileUploadDiv = ({ openFileDialog }: FileUploadDivProps) => {
             return;
         }
 
-        const userData = getUserData();
-        if (!userData || !userData.id) {
-            window.alert("No user session found.");
-            return;
-        }
+        if(!user) return null;
+        const userData = user;
 
         // Get valid token (automatically refreshes if expired)
         let token: string;
         try {
-            token = await getValidToken();
+            token = await getValidToken(navigate);
         } catch (error) {
             //console.error("Error getting valid token:", error);
             window.alert("Authentication error. Please sign in again.");
@@ -136,14 +137,8 @@ const FileUploadDiv = ({ openFileDialog }: FileUploadDivProps) => {
             window.alert("File uploaded successfully.");
             // Reset state after successful upload
             //update the cache
-            const filesCache = JSON.parse(localStorage.getItem("filesFolderMap") || "{}");
-            if(filesCache !== null && folder_id !== null &&filesCache[folder_id?.toString()]){
-                filesCache[folder_id.toString()].files.push(response.data);
-            }else if(filesCache && folder_id === null){
-                filesCache["root"].files.push(response.data);
-            }
+            appendFile(folder_id?.toString() ?? null, response.data);
 
-            localStorage.setItem("filesFolderMap", JSON.stringify(filesCache));
             setFile(null);
             setFolderId(null);
             openFileDialog(false);

@@ -5,12 +5,16 @@ import { fileProps } from '../MainContent/file.interface.ts';
 import axios from 'axios';
 import { getValidToken, getUserData } from '../../../Utils/tokenUtils.ts';
 import FileIcon from '../MainContent/FileIcon.tsx';
+import { useAuth } from '../../../Context/AuthContext.tsx';
+import { useNavigate } from 'react-router-dom';
 
 const WebAppHeader = () => {
     const [searchWindowVisible,setSearchWindowVisible] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [searchedFiles, setSearchedFiles] = useState<fileProps[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+    const {user} = useAuth();
+    const navigate = useNavigate();
 
     const toggleSearchWindow = () => {
         if(searchWindowVisible){
@@ -21,18 +25,13 @@ const WebAppHeader = () => {
     }
 
     const search = async() => {
-        const userData = getUserData();
-        if (!userData || !userData.id) {
-            //console.error("No user session found.");
-            return;
-        }
-
-        const userId = userData.id;
+        if(!user) return null;
+        const userId = user.id;
 
         // Get valid token (automatically refreshes if expired)
         let token: string;
         try {
-            token = await getValidToken();
+            token = await getValidToken(navigate);
         } catch (error) {
             //console.error("Error getting valid token:", error);
             return;

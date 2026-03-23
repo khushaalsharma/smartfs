@@ -3,6 +3,9 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./webAppUtilsStyles.css";
 import axios from 'axios';
 import { getValidToken, getUserData } from '../../../Utils/tokenUtils.ts';
+import { useAuth } from '../../../Context/AuthContext.tsx';
+import { useFileCache } from '../../../Context/FileCacheContext.tsx';
+import { useNavigate } from 'react-router-dom';
 
 interface FolderDivProps {
     changeFolderDialogState: (newFileDialog: boolean) => void;
@@ -10,25 +13,23 @@ interface FolderDivProps {
 
 const NewFolderDialog = ({changeFolderDialogState}: FolderDivProps) => {
 
+    const {user} = useAuth();
+    const {appendFolder} = useFileCache();
+    const navigate = useNavigate();
+
     const [folderName, setFolderName] = useState<string>("");
     const [parentFolderId, setParentFolderId] = useState<number | null>(null);
     const [folders, setFolders] = useState<Map<number, string>>(new Map());
-    const [userId, setUserId] = useState<string | null>(null);
+    
 
     const getAllFolders = async() => {
-        const userData = getUserData();
-        if (!userData || !userData.id) {
-            //console.error("User ID not found");
-            return;
-        }
-
-        const userId = userData.id;
-        setUserId(userId);
+        if(!user) return ;
+        const userId = user.id;
 
         // Get valid token (automatically refreshes if expired)
         let token: string;
         try {
-            token = await getValidToken();
+            token = await getValidToken(navigate);
         } catch (error) {
             //console.error("Error getting valid token:", error);
             return;
@@ -61,21 +62,13 @@ const NewFolderDialog = ({changeFolderDialogState}: FolderDivProps) => {
     }, []);
 
     const handleNewFolder = async() => {
-        let currentUserId = userId;
-        if(!currentUserId){
-            const userData = getUserData();
-            if (!userData || !userData.id) {
-                //console.error("User ID not found");
-                return;
-            }
-            currentUserId = userData.id;
-            setUserId(currentUserId);
-        }
+        if(!user) return ;
+        const currentUserId = user.id;
 
         // Get valid token (automatically refreshes if expired)
         let validToken: string;
         try {
-            validToken = await getValidToken();
+            validToken = await getValidToken(navigate);
         } catch (error) {
             //console.error("Error getting valid token:", error);
             return;
@@ -99,14 +92,7 @@ const NewFolderDialog = ({changeFolderDialogState}: FolderDivProps) => {
                 //console.log("Folder created successfully: ", response.data);
 
                 //update the cache 
-                const cache = JSON.parse(localStorage.getItem("filesFolderMap") || "{}");
-                if(cache !== null && parentFolderId !== null && cache[parentFolderId.toString()]){
-                    cache[parentFolderId.toString()].folders.push(response.data);
-                }else if(cache && parentFolderId === null){
-                    cache["root"].folders.push(response.data);
-                }
-
-                localStorage.setItem("filesFolderMap", JSON.stringify(cache));
+               appendFolder(parentFolderId, response.data);
                 changeFolderDialogState(false);
             }).catch((error) => {
                 //console.error("Error in folder creation: ", error);
